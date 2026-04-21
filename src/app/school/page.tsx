@@ -154,19 +154,24 @@ export default async function SchoolHomePage() {
         {/* Right Panel */}
         <div className="space-y-5">
           {/* Quick Actions */}
-          {canEdit && (
-            <section className="card p-5">
-              <h2 className="text-base font-black text-gray-900 mb-4">🚀 إجراءات سريعة</h2>
-              <div className="space-y-2">
-                <Link href="/school/upload" className="flex items-center gap-3 p-3 border border-gray-100 rounded-xl text-sm font-bold text-gray-600 hover:bg-emerald-50 hover:border-emerald-200 hover:text-emerald-700 transition-all">
-                  <span>⬆️</span> رفع ملف Excel
-                </Link>
-                <Link href="/school/students" className="flex items-center gap-3 p-3 border border-gray-100 rounded-xl text-sm font-bold text-gray-600 hover:bg-blue-50 hover:border-blue-200 hover:text-blue-700 transition-all">
-                  <span>📋</span> عرض كشوف الطلاب
-                </Link>
-              </div>
-            </section>
-          )}
+          <section className="card p-5">
+            <h2 className="text-base font-black text-gray-900 mb-4">🚀 إجراءات سريعة</h2>
+            <div className="space-y-2">
+              {canEdit && (
+                <>
+                  <Link href="/school/upload" className="flex items-center gap-3 p-3 border border-gray-100 rounded-xl text-sm font-bold text-gray-600 hover:bg-emerald-50 hover:border-emerald-200 hover:text-emerald-700 transition-all">
+                    <span>⬆️</span> رفع ملف Excel
+                  </Link>
+                </>
+              )}
+              <a href={`/api/export-school-data?schoolId=${perm.school_id}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 border border-green-200 rounded-xl text-sm font-bold text-green-700 bg-green-50 hover:bg-green-100 transition-all">
+                <span>📥</span> استخراج كافة البيانات (Excel)
+              </a>
+              <a href={`/api/template?schoolId=${perm.school_id}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 border border-teal-200 rounded-xl text-sm font-bold text-teal-700 bg-teal-50 hover:bg-teal-100 transition-all">
+                <span>📑</span> تحميل كشوف الطباعة فارغة
+              </a>
+            </div>
+          </section>
 
           {/* Leaders */}
           <section className="card p-5">

@@ -13,12 +13,25 @@ const supabaseAdmin = createClient(
 
 export async function GET(req: NextRequest) {
   try {
-    // جلب قائمة المدارس من قاعدة البيانات
-    const { data: schools } = await supabaseAdmin
+    const schoolId = req.nextUrl.searchParams.get('schoolId');
+    
+    // جلب بيانات المدرسة إذا تم تحديد schoolId
+    let targetSchool: any = null;
+    let schoolsQuery = supabaseAdmin
       .from('schools')
-      .select('school_code, school_name_ar, school_type, educational_stage, educational_administrations(name_ar)')
+      .select('id, school_code, school_name_ar, school_type, educational_stage, educational_administrations(name_ar, governorate)')
       .eq('is_active', true)
       .order('school_name_ar');
+      
+    if (schoolId) {
+      schoolsQuery = schoolsQuery.eq('id', schoolId);
+    }
+    
+    const { data: schools } = await schoolsQuery;
+    
+    if (schoolId && schools && schools.length > 0) {
+      targetSchool = schools[0];
+    }
 
     const schoolList = (schools ?? []).map((s: any, i: number) => ({
       'م': i + 1,
@@ -34,20 +47,21 @@ export async function GET(req: NextRequest) {
     // ─── Sheet 1: قائمة المدارس ───────────────────────────
     const wsSchools = XLSX.utils.json_to_sheet(schoolList);
     wsSchools['!cols'] = [
-      { wch: 5 },  // م
-      { wch: 14 }, // كود
-      { wch: 45 }, // اسم
-      { wch: 14 }, // نوع
-      { wch: 12 }, // مرحلة
-      { wch: 25 }, // إدارة
+      { wch: 5 },  { wch: 14 }, { wch: 45 }, { wch: 14 }, { wch: 12 }, { wch: 25 },
     ];
     XLSX.utils.book_append_sheet(wb, wsSchools, 'قائمة المدارس');
 
+    // Headers Text
+    const govText = targetSchool?.educational_administrations?.governorate ? `محافظة ${targetSchool.educational_administrations.governorate}` : 'محافظة الجيزة';
+    const admText = targetSchool?.educational_administrations?.name_ar ? `إدارة ${targetSchool.educational_administrations.name_ar}` : 'إدارة ........... التعليمية';
+    const schText = targetSchool?.school_name_ar ? `مدرسة : ${targetSchool.school_name_ar}` : 'مدرسة : ............';
+    const codText = targetSchool?.school_code ? `كود المدرسة : ${targetSchool.school_code}` : 'كود المدرسة : ............';
+
     // ─── Sheet 2: إحصاءات الصفوف ──────────────────────────
     const statsHeader = [
-      ['محافظة الجيزة', '', 'إحصاءات الصفوف الدراسية', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''],
-      ['إدارة ........... التعليمية', '', 'العام الدراسي 2025/2026', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''],
-      ['مدرسة : ............', '', 'كود المدرسة : ............', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''],
+      [govText, '', 'إحصاءات الصفوف الدراسية', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''],
+      [admText, '', 'العام الدراسي 2025/2026', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''],
+      [schText, '', codText, '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''],
       [],
       ['الصف', 'عدد الفصول', 'بنين', 'بنات', 'المجموع', 'مسلم', 'مسيحي',
        'ذهني', 'سمعي', 'بصري', 'حركي', 'متعدد', 'إجمالي الدمج',
@@ -67,16 +81,12 @@ export async function GET(req: NextRequest) {
 
     // ─── Sheet 3: كشف الضعاف ──────────────────────────────
     const lowHeader = [
-      ['محافظة الجيزة', '', 'سجل الطلاب الضعاف', '', '', '', ''],
-      ['إدارة ........... التعليمية', '', 'الفصل الدراسي الثاني 2025 / 2026', '', '', '', ''],
-      ['مدرسة : ............', '', 'كود المدرسة : ............', '', '', '', ''],
+      [govText, '', 'سجل الطلاب الضعاف', '', '', '', ''],
+      [admText, '', 'الفصل الدراسي الثاني 2025 / 2026', '', '', '', ''],
+      [schText, '', codText, '', '', '', ''],
       [],
       ['م', 'اسم التلميذ', 'الصف', 'الفصل', 'ملاحظات'],
-      [1, '', '', '', ''],
-      [2, '', '', '', ''],
-      [3, '', '', '', ''],
-      [4, '', '', '', ''],
-      [5, '', '', '', ''],
+      [1, '', '', '', ''], [2, '', '', '', ''], [3, '', '', '', ''], [4, '', '', '', ''], [5, '', '', '', ''],
     ];
     const wsLow = XLSX.utils.aoa_to_sheet(lowHeader);
     wsLow['!cols'] = [{ wch: 5 }, { wch: 40 }, { wch: 14 }, { wch: 10 }, { wch: 25 }];
@@ -84,9 +94,9 @@ export async function GET(req: NextRequest) {
 
     // ─── Sheet 4: كشف الدمج ───────────────────────────────
     const incHeader = [
-      ['محافظة الجيزة', '', 'كشف طلاب الدمج', '', '', '', ''],
-      ['إدارة ........... التعليمية', '', 'العام الدراسي 2025/2026', '', '', '', ''],
-      ['مدرسة : ............', '', 'كود المدرسة : ............', '', '', '', ''],
+      [govText, '', 'كشف طلاب الدمج', '', '', '', ''],
+      [admText, '', 'العام الدراسي 2025/2026', '', '', '', ''],
+      [schText, '', codText, '', '', '', ''],
       [],
       ['م', 'اسم التلميذ', 'الرقم القومي', 'الصف', 'الفصل', 'نوع الإعاقة'],
       [],
@@ -98,9 +108,9 @@ export async function GET(req: NextRequest) {
 
     // ─── Sheet 5: كشف الوافدين ────────────────────────────
     const expHeader = [
-      ['محافظة الجيزة', '', 'كشف الطلاب الوافدين', '', '', '', ''],
-      ['إدارة ........... التعليمية', '', 'العام الدراسي 2025/2026', '', '', '', ''],
-      ['مدرسة : ............', '', 'كود المدرسة : ............', '', '', '', ''],
+      [govText, '', 'كشف الطلاب الوافدين', '', '', '', ''],
+      [admText, '', 'العام الدراسي 2025/2026', '', '', '', ''],
+      [schText, '', codText, '', '', '', ''],
       [],
       ['م', 'اسم التلميذ', 'الصف', 'الفصل', 'الجنسية', 'رقم الجواز'],
     ];
@@ -110,9 +120,9 @@ export async function GET(req: NextRequest) {
 
     // ─── Sheet 6: كشف اللاجئين ────────────────────────────
     const refHeader = [
-      ['محافظة الجيزة', '', 'كشف الطلاب اللاجئين', '', '', '', ''],
-      ['إدارة ........... التعليمية', '', 'العام الدراسي 2025/2026', '', '', '', ''],
-      ['مدرسة : ............', '', 'كود المدرسة : ............', '', '', '', ''],
+      [govText, '', 'كشف الطلاب اللاجئين', '', '', '', ''],
+      [admText, '', 'العام الدراسي 2025/2026', '', '', '', ''],
+      [schText, '', codText, '', '', '', ''],
       [],
       ['م', 'اسم التلميذ', 'الصف', 'الفصل', 'الدولة', 'التصنيف'],
       [],
@@ -124,9 +134,9 @@ export async function GET(req: NextRequest) {
 
     // ─── Sheet 7: القيادات المدرسية ────────────────────────
     const leadersHeader = [
-      ['محافظة الجيزة', '', 'القيادات المدرسية', '', '', '', ''],
-      ['إدارة ........... التعليمية', '', 'العام الدراسي 2025/2026', '', '', '', ''],
-      ['مدرسة : ............', '', 'كود المدرسة : ............', '', '', '', ''],
+      [govText, '', 'القيادات المدرسية', '', '', '', ''],
+      [admText, '', 'العام الدراسي 2025/2026', '', '', '', ''],
+      [schText, '', codText, '', '', '', ''],
       [],
       ['م', 'الاسم بالكامل', 'الرقم القومي', 'الوظيفة / المسمى', 'رقم التليفون', 'الكادر', 'نوع التعيين'],
       [1, '', '', 'مدير', '', '', ''],
@@ -144,9 +154,9 @@ export async function GET(req: NextRequest) {
 
     // ─── Sheet 8: بيانات المبنى ────────────────────────────
     const buildingRows = [
-      ['محافظة الجيزة', '', 'بيانات المبنى المدرسي'],
-      ['إدارة ........... التعليمية', '', 'العام الدراسي 2025/2026'],
-      ['مدرسة : ............', '', 'كود المدرسة : ............'],
+      [govText, '', 'بيانات المبنى المدرسي'],
+      [admText, '', 'العام الدراسي 2025/2026'],
+      [schText, '', codText],
       [],
       ['البيان', 'القيمة', 'ملاحظات'],
       ['حالة المبنى', '', '← (جيد / متوسط / ضعيف / آيل للسقوط)'],
@@ -169,9 +179,9 @@ export async function GET(req: NextRequest) {
 
     // ─── Sheet 9: العاملون ─────────────────────────────────
     const staffHeader = [
-      ['محافظة الجيزة', '', 'كشف العاملين بالمدرسة', '', '', '', ''],
-      ['إدارة ........... التعليمية', '', 'العام الدراسي 2025/2026', '', '', '', ''],
-      ['مدرسة : ............', '', 'كود المدرسة : ............', '', '', '', ''],
+      [govText, '', 'كشف العاملين بالمدرسة', '', '', '', ''],
+      [admText, '', 'العام الدراسي 2025/2026', '', '', '', ''],
+      [schText, '', codText, '', '', '', ''],
       [],
       ['م', 'الاسم بالكامل', 'الرقم القومي', 'الفئة', 'المؤهل', 'الحالة', 'رقم التليفون'],
       [],
@@ -184,10 +194,12 @@ export async function GET(req: NextRequest) {
     // ─── تصدير الملف ──────────────────────────────────────
     const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
 
+    const filename = targetSchool ? `نموذج_طباعة_${targetSchool.school_name_ar.replace(/\s+/g, '_')}.xlsx` : 'template_school_data.xlsx';
+
     return new NextResponse(buf, {
       headers: {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'Content-Disposition': 'attachment; filename="template_school_data.xlsx"',
+        'Content-Disposition': `attachment; filename="${encodeURIComponent(filename)}"`,
         'Content-Length': buf.length.toString(),
       },
     });

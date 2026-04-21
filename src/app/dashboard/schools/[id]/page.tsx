@@ -82,10 +82,16 @@ export default async function SchoolDetailsPage({ params }: { params: { id: stri
               ✍️ إدخال يدوي
             </Link>
             <Link href={`/dashboard/schools/${params.id}/edit`} className="btn-primary text-sm">
-              ✏️ تعديل المدرسة
+               ✏️ تعديل المدرسة
             </Link>
+            <a href={`/api/template?schoolId=${params.id}`} target="_blank" rel="noopener noreferrer" className="btn-secondary text-sm border-teal-200 text-teal-700 bg-teal-50 hover:bg-teal-100">
+              📑 كشوف فارغة
+            </a>
+            <a href={`/api/export-school-data?schoolId=${params.id}`} target="_blank" rel="noopener noreferrer" className="btn-secondary text-sm border-green-200 text-green-700 bg-green-50 hover:bg-green-100">
+              📥 استخراج (Excel) ممتلئ
+            </a>
             <Link href={`/dashboard/schools/${params.id}/report`} className="btn-secondary text-sm border-orange-200 text-orange-700 bg-orange-50 hover:bg-orange-100">
-              🖨️ تقرير للطباعة
+              🖨️ تقرير المدرسة
             </Link>
             <DeleteSchoolButton schoolId={params.id} />
           </div>

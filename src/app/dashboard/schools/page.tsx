@@ -43,10 +43,15 @@ export default async function SchoolsListPage({
             {filtered.length} مدرسة — {totalStudents.toLocaleString('ar-EG')} طالب إجمالاً
           </p>
         </div>
-        <Link href="/dashboard/schools/new" className="btn-primary flex items-center gap-2">
-          <span className="text-lg">+</span>
-          إضافة مدرسة جديدة
-        </Link>
+        <div className="flex gap-3">
+          <a href="/api/admin-export" target="_blank" rel="noopener noreferrer" className="btn-secondary flex items-center gap-2 border-green-200 text-green-700 bg-green-50 hover:bg-green-100">
+            📊 تصدير (Excel)
+          </a>
+          <Link href="/dashboard/schools/new" className="btn-primary flex items-center gap-2">
+            <span className="text-lg">+</span>
+            إضافة مدرسة
+          </Link>
+        </div>
       </header>
 
       {/* Filters */}
