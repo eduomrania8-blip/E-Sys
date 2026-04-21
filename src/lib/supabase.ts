@@ -1,17 +1,21 @@
 // src/lib/supabase.ts
-// Singleton Supabase clients – one for client-side, one server-side (service role)
-
+import { createBrowserClient } from '@supabase/ssr';
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-/** Browser / client-side client (uses anon key, RLS applies) */
-export const supabaseBrowser = createClient(supabaseUrl, supabaseAnonKey);
+/** 
+ * Client-side browser client.
+ * Uses @supabase/ssr to ensure cookies are synced with the server.
+ */
+export const supabaseBrowser = createBrowserClient(
+  supabaseUrl,
+  supabaseAnonKey
+);
 
 /**
- * Server-side admin client (service role key – NEVER expose to browser).
- * Use only inside API routes and server components.
+ * Server-side admin client for API routes.
  */
 export function createAdminClient() {
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;

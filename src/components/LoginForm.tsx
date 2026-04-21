@@ -1,15 +1,13 @@
-'use client';
 // src/components/LoginForm.tsx
+'use client';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-
-type Tab = 'school' | 'admin';
+import { supabaseBrowser } from '@/lib/supabase';
 
 export default function LoginForm() {
   const router = useRouter();
-  const [tab, setTab] = useState<Tab>('school');
-  const [identifier, setIdentifier] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -18,65 +16,54 @@ export default function LoginForm() {
     e.preventDefault();
     setError('');
     setLoading(true);
+
     try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: tab, identifier, password }),
+      const { data, error: authError } = await supabaseBrowser.auth.signInWithPassword({
+        email,
+        password,
       });
-      const data = await res.json();
-      if (!res.ok) { setError(data.error ?? 'حدث خطأ'); return; }
-      router.push(data.role === 'admin' ? '/dashboard/admin' : '/dashboard/school');
-      router.refresh();
-    } catch {
-      setError('حدث خطأ في الاتصال');
+
+      if (authError) throw authError;
+
+      // Use window.location instead of router.push for a clean session state reload
+      window.location.href = '/dashboard';
+      
+    } catch (err: any) {
+      console.error('Login Error:', err);
+      setError(err.message || 'فشل تسجيل الدخول. يرجى التحقق من البيانات.');
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-content bg-gradient-to-br from-navy to-brand p-4" style={{ justifyContent: 'center' }}>
-      <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
-        {/* Logo */}
-        <div className="text-center mb-6">
-          <div className="text-5xl mb-3">🏫</div>
-          <h1 className="text-xl font-bold text-navy">منظومة الطلاب الضعاف</h1>
-          <p className="text-sm text-gray-500 mt-1">المرحلة الابتدائية — الإدارة التعليمية</p>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4" dir="rtl">
+      <div className="bg-white rounded-3xl shadow-xl p-10 w-full max-w-md border border-gray-100">
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center text-white mx-auto mb-4 text-3xl font-black shadow-lg shadow-blue-200">
+            E
+          </div>
+          <h1 className="text-2xl font-black text-gray-900">منظومة التعليم الابتدائى</h1>
+          <p className="text-sm text-gray-500 mt-2 font-medium">تسجيل الدخول للمتابعة</p>
         </div>
 
-        {/* Tabs */}
-        <div className="flex rounded-lg overflow-hidden border border-gray-200 mb-6">
-          {(['school', 'admin'] as Tab[]).map((t) => (
-            <button
-              key={t}
-              onClick={() => { setTab(t); setError(''); }}
-              className={`flex-1 py-2.5 text-sm font-semibold transition-colors ${
-                tab === t ? 'bg-navy text-white' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'
-              }`}
-            >
-              {t === 'school' ? '🏫 دخول المدرسة' : '🔐 دخول الأدمن'}
-            </button>
-          ))}
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-              {tab === 'school' ? 'كود المدرسة' : 'اسم المستخدم'}
+            <label className="block text-sm font-bold text-gray-700 mb-2">
+              البريد الإلكتروني
             </label>
             <input
-              type="text"
-              value={identifier}
-              onChange={(e) => setIdentifier(tab === 'school' ? e.target.value.toUpperCase() : e.target.value)}
-              placeholder={tab === 'school' ? 'أدخل كود المدرسة' : 'admin'}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm outline-none focus:border-brand focus:ring-2 focus:ring-blue-100"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="name@school.edu.eg"
+              className="w-full px-5 py-3.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all outline-none"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+            <label className="block text-sm font-bold text-gray-700 mb-2">
               كلمة المرور
             </label>
             <input
@@ -84,13 +71,13 @@ export default function LoginForm() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm outline-none focus:border-brand focus:ring-2 focus:ring-blue-100"
+              className="w-full px-5 py-3.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all outline-none"
               required
             />
           </div>
 
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-2.5 text-sm">
+            <div className="bg-red-50 border border-red-100 text-red-600 rounded-xl p-4 text-sm font-bold">
               ⚠️ {error}
             </div>
           )}
@@ -98,15 +85,17 @@ export default function LoginForm() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-brand hover:bg-blue-700 disabled:bg-blue-300 text-white font-bold py-3 rounded-lg text-sm transition-colors"
+            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-black py-4 rounded-xl text-lg transition-all shadow-lg shadow-blue-200"
           >
-            {loading ? '⏳ جارٍ التحقق...' : tab === 'school' ? '🔑 دخول' : '🔐 دخول الأدمن'}
+            {loading ? 'جارٍ التحقق...' : 'تسجيل الدخول'}
           </button>
         </form>
 
-        <p className="text-center text-xs text-gray-400 mt-5">
-          للمساعدة تواصل مع مسؤول النظام
-        </p>
+        <div className="mt-8 pt-6 border-t border-gray-100 text-center">
+            <p className="text-xs text-gray-400 font-bold">
+              تواصل مع مسؤول الإدارة لتفعيل حساب مدرستك
+            </p>
+        </div>
       </div>
     </div>
   );

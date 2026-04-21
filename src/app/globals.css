@@ -1,35 +1,103 @@
+/* src/app/globals.css */
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-html,
-body {
-  direction: rtl;
-  font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
-  background-color: #f0f4f8;
+/* ─── Base ───────────────────────────────────────── */
+:root {
+  --font-main: 'Cairo', sans-serif;
 }
 
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: #f1f5f9;
-}
-::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 3px;
-}
-
-/* RTL table alignment */
-th,
-td {
-  text-align: right;
-}
-
-/* Smooth transitions */
 * {
-  transition-property: background-color, border-color, color, opacity;
-  transition-duration: 150ms;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  font-family: var(--font-main);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ─── Input Utility ──────────────────────────────── */
+@layer components {
+  .input {
+    @apply w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium
+           focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white
+           outline-none transition-all duration-150 text-gray-800 placeholder-gray-400;
+  }
+
+  .btn-primary {
+    @apply px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-black
+           rounded-xl shadow-lg shadow-blue-200 transition-all duration-150
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply px-6 py-2.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-sm font-bold
+           rounded-xl transition-all duration-150;
+  }
+
+  .card {
+    @apply bg-white rounded-2xl border border-gray-100 shadow-sm;
+  }
+
+  .badge-danger   { @apply px-2.5 py-0.5 bg-red-100 text-red-700 text-xs font-black rounded-full; }
+  .badge-warning  { @apply px-2.5 py-0.5 bg-orange-100 text-orange-700 text-xs font-black rounded-full; }
+  .badge-success  { @apply px-2.5 py-0.5 bg-green-100 text-green-700 text-xs font-black rounded-full; }
+  .badge-info     { @apply px-2.5 py-0.5 bg-blue-100 text-blue-700 text-xs font-black rounded-full; }
+  .badge-neutral  { @apply px-2.5 py-0.5 bg-gray-100 text-gray-700 text-xs font-black rounded-full; }
+}
+
+/* ─── Scrollbar ──────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #f1f5f9; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+/* ─── Page Transitions ───────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.animate-in {
+  animation: fadeIn 0.3s ease-out both;
+}
+
+/* ─── Print ──────────────────────────────────────── */
+@media print {
+  .no-print,
+  .no-print * { display: none !important; }
+  nav, aside, footer,
+  button:not(.print-keep) { display: none !important; }
+  body {
+    background: white;
+    font-size: 11px;
+    color: #000;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  @page {
+    size: A4 portrait;
+    margin: 15mm 10mm;
+  }
+  .card { box-shadow: none !important; border: 1px solid #ddd !important; }
+  table { page-break-inside: auto; }
+  tr { page-break-inside: avoid; page-break-after: auto; }
+  thead { display: table-header-group; }
+  .badge-danger, .badge-warning, .badge-info, .badge-success {
+    border: 1px solid currentColor !important;
+  }
+  /* ترويسة التقرير تظهر فوق كل صفحة */
+  .print-header {
+    display: block !important;
+    text-align: center;
+    margin-bottom: 10mm;
+    padding-bottom: 5mm;
+    border-bottom: 2px solid #333;
+  }
 }
