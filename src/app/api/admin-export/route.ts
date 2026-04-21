@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      { cookies: { get: (n) => cookieStore.get(n)?.value } }
+      { cookies: { get: (n: string) => cookieStore.get(n)?.value } }
     );
 
     // Verify Admin rights (or just checking session for simplicity here, RLS is handled at DB level but since we use anon key we rely on RLS)
