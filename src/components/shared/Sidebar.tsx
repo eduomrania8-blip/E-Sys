@@ -1,5 +1,6 @@
 'use client';
 // src/components/shared/Sidebar.tsx
+// Sidebar مخصص للإدارة التعليمية
 
 import React, { useState } from 'react';
 import Link from 'next/link';
@@ -10,61 +11,39 @@ const navLinks = [
   {
     href: '/dashboard',
     label: 'نظرة عامة',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
-        <rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" />
-        <rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" />
-      </svg>
-    ),
+    icon: '📊',
     exact: true,
+    description: 'ملخص الإدارة',
   },
   {
     href: '/dashboard/schools',
     label: 'دليل المدارس',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
-        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" /><polyline points="9 22 9 12 15 12 15 22" />
-      </svg>
-    ),
+    icon: '🏫',
+    description: 'قائمة مدارس الإدارة',
   },
   {
     href: '/dashboard/analytics',
     label: 'مركز التحليلات',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
-        <line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" />
-        <line x1="6" y1="20" x2="6" y2="14" />
-      </svg>
-    ),
+    icon: '📈',
+    description: 'إحصاءات ورسوم',
   },
   {
     href: '/dashboard/upload',
     label: 'رفع البيانات',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
-        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" />
-      </svg>
-    ),
+    icon: '⬆️',
+    description: 'استيراد من Excel',
   },
   {
     href: '/dashboard/reports',
     label: 'التقارير',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
-        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-        <polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" />
-      </svg>
-    ),
+    icon: '🖨️',
+    description: 'طباعة وتصدير',
   },
   {
     href: '/dashboard/settings',
     label: 'الإعدادات',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
-        <circle cx="12" cy="12" r="3" />
-        <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" />
-      </svg>
-    ),
+    icon: '⚙️',
+    description: 'إعدادات المنظومة',
   },
 ];
 
@@ -81,88 +60,101 @@ export function Sidebar() {
   };
 
   return (
-    <aside
-      className={`
-        flex flex-col bg-gray-900 text-white transition-all duration-300
-        ${collapsed ? 'w-16' : 'w-64'}
-        min-h-screen shrink-0
-      `}
-    >
-      {/* Logo */}
-      <div className="flex items-center gap-3 p-5 border-b border-gray-700">
-        <div className="w-9 h-9 bg-blue-500 rounded-xl flex items-center justify-center text-white font-black text-lg shrink-0 shadow-lg shadow-blue-500/30">
-          E
+    <aside className={`flex flex-col transition-all duration-300 ${collapsed ? 'w-[72px]' : 'w-72'} min-h-screen shrink-0`}>
+      {/* Background gradient */}
+      <div className="flex flex-col flex-1 bg-gradient-to-b from-blue-900 via-blue-800 to-indigo-950 text-white shadow-xl z-20">
+
+        {/* Brand Identity */}
+        <div className={`flex items-center gap-3 p-5 border-b border-blue-700/50 ${collapsed ? 'justify-center' : ''}`}>
+          <div className="w-11 h-11 bg-white/15 backdrop-blur rounded-xl flex items-center justify-center text-white font-black text-xl shrink-0 shadow-lg border border-white/10">
+            E
+          </div>
+          {!collapsed && (
+            <div className="overflow-hidden flex-1 min-w-0">
+              <p className="font-black text-sm leading-tight truncate">منظومة الإحصاء</p>
+              <p className="text-[10px] text-blue-300 font-bold tracking-wide mt-0.5">الإدارة التعليمية</p>
+            </div>
+          )}
+          <button
+            onClick={() => setCollapsed(!collapsed)}
+            className="p-1.5 rounded-lg hover:bg-blue-700/50 transition-colors text-blue-300 hover:text-white shrink-0"
+            title={collapsed ? 'توسيع' : 'طي'}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
+              {collapsed ? <path d="M9 18l6-6-6-6" /> : <path d="M15 18l-6-6 6-6" />}
+            </svg>
+          </button>
         </div>
+
+        {/* Permission Badge */}
         {!collapsed && (
-          <div className="overflow-hidden">
-            <p className="font-black text-sm leading-tight">منظومة التعليم</p>
-            <p className="text-[10px] text-gray-400 font-bold">الابتدائى</p>
+          <div className="px-5 py-3 border-b border-blue-700/30">
+            <span className="text-[10px] font-black px-3 py-1.5 rounded-full inline-flex items-center gap-1.5 bg-blue-500/20 text-blue-200 border border-blue-500/30">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
+              مدير النظام (Admin)
+            </span>
           </div>
         )}
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          className="mr-auto p-1.5 rounded-lg hover:bg-gray-700 transition-colors text-gray-400 hover:text-white"
-          title={collapsed ? 'توسيع' : 'طي'}
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
-            {collapsed ? (
-              <path d="M9 18l6-6-6-6" />
-            ) : (
-              <path d="M15 18l-6-6 6-6" />
-            )}
-          </svg>
-        </button>
-      </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-        {navLinks.map((link) => {
-          const active = isActive(link.href, link.exact);
-          return (
+        {/* Navigation */}
+        <nav className="flex-1 p-3 space-y-1 overflow-y-auto custom-scrollbar">
+          {!collapsed && (
+            <p className="text-[10px] font-bold text-blue-400/60 uppercase tracking-wider px-3 mb-2">القائمة الرئيسية</p>
+          )}
+          {navLinks.map(link => {
+            const active = isActive(link.href, link.exact);
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                title={collapsed ? link.label : link.description}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 group
+                  ${active
+                    ? 'bg-white/15 text-white shadow-lg backdrop-blur border border-white/10'
+                    : 'text-blue-200/80 hover:text-white hover:bg-white/5'}
+                  ${collapsed ? 'justify-center' : ''}
+                `}
+              >
+                <span className={`text-base transition-transform group-hover:scale-110 ${collapsed ? '' : 'w-6 text-center'}`}>{link.icon}</span>
+                {!collapsed && (
+                  <div className="flex-1 min-w-0">
+                    <span className="block">{link.label}</span>
+                    {active && link.description && (
+                      <span className="text-[9px] text-blue-300/70 block mt-0.5">{link.description}</span>
+                    )}
+                  </div>
+                )}
+                {active && !collapsed && (
+                  <div className="w-1.5 h-6 bg-blue-400 rounded-full shadow-[0_0_8px_rgba(96,165,250,0.8)]" />
+                )}
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Bottom Section */}
+        <div className="p-3 border-t border-blue-700/30 space-y-2 bg-blue-950/20">
+          {/* Quick Action */}
+          {!collapsed && (
             <Link
-              key={link.href}
-              href={link.href}
-              title={collapsed ? link.label : undefined}
-              className={`
-                flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold
-                transition-all duration-150 group
-                ${active
-                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
-                  : 'text-gray-400 hover:text-white hover:bg-gray-800'
-                }
-                ${collapsed ? 'justify-center' : ''}
-              `}
+              href="/dashboard/schools/new"
+              className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-bold text-blue-200/70 hover:text-white hover:bg-white/5 transition-all"
             >
-              <span className={active ? 'text-white' : 'text-gray-500 group-hover:text-white'}>
-                {link.icon}
-              </span>
-              {!collapsed && <span>{link.label}</span>}
-              {active && !collapsed && (
-                <span className="mr-auto w-1.5 h-1.5 bg-white rounded-full" />
-              )}
+              <span className="text-sm">➕</span>
+              إضافة مدرسة جديدة
             </Link>
-          );
-        })}
-      </nav>
+          )}
 
-      {/* Sign Out */}
-      <div className="p-3 border-t border-gray-700">
-        <button
-          onClick={handleSignOut}
-          title={collapsed ? 'تسجيل الخروج' : undefined}
-          className={`
-            w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold
-            text-gray-400 hover:text-red-400 hover:bg-red-500/10 transition-all
-            ${collapsed ? 'justify-center' : ''}
-          `}
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5 shrink-0">
-            <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
-            <polyline points="16 17 21 12 16 7" />
-            <line x1="21" y1="12" x2="9" y2="12" />
-          </svg>
-          {!collapsed && 'تسجيل الخروج'}
-        </button>
+          {/* Sign Out */}
+          <button
+            onClick={handleSignOut}
+            title={collapsed ? 'تسجيل الخروج' : undefined}
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-blue-300/70 hover:text-red-300 hover:bg-red-900/40 transition-all group ${collapsed ? 'justify-center' : ''}`}
+          >
+            <span className="text-base group-hover:rotate-12 transition-transform">🚪</span>
+            {!collapsed && 'تسجيل الخروج'}
+          </button>
+        </div>
       </div>
     </aside>
   );

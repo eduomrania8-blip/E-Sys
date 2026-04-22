@@ -9,7 +9,7 @@ export default async function DashboardPage() {
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies: { get: (n) => cookieStore.get(n)?.value } }
+    { cookies: { get: (n: string) => cookieStore.get(n)?.value } }
   );
 
   const [summaryRes, highDensityRes, adminSummaryRes] = await Promise.all([
@@ -38,164 +38,206 @@ export default async function DashboardPage() {
   const warningSchools = highDensity.filter((s: any) => s.density_status === 'مرتفع').length;
 
   return (
-    <div className="space-y-8" dir="rtl">
-      {/* Header */}
-      <header>
-        <h1 className="text-3xl font-black text-gray-900">لوحة القيادة</h1>
-        <p className="text-gray-500 mt-1 font-medium">نظرة عامة على الإدارة التعليمية — العام الدراسي 2025-2026</p>
+    <div className="space-y-8 animate-in" dir="rtl">
+      {/* ═══════ Header ═══════ */}
+      <header className="relative overflow-hidden bg-gradient-to-l from-blue-700 via-blue-800 to-indigo-900 rounded-2xl p-6 text-white shadow-xl">
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-0 left-0 w-96 h-96 bg-white rounded-full -translate-x-1/2 -translate-y-1/2" />
+          <div className="absolute bottom-0 right-0 w-64 h-64 bg-white rounded-full translate-x-1/3 translate-y-1/3" />
+        </div>
+        <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 bg-white/20 backdrop-blur rounded-2xl flex items-center justify-center text-4xl shadow-lg border border-white/20">
+              🌍
+            </div>
+            <div>
+              <p className="text-blue-200 text-xs font-bold mb-1">لوحة القيادة — 2025/2026</p>
+              <h1 className="text-2xl md:text-3xl font-black leading-tight">الإدارة التعليمية</h1>
+              <p className="text-blue-200 mt-1 text-sm font-medium">نظرة عامة شاملة لجميع المدارس المسجلة</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 bg-white/10 backdrop-blur rounded-xl px-5 py-3 border border-white/10">
+            <div className="text-center">
+              <p className="text-2xl font-black">{totalSchools}</p>
+              <p className="text-[10px] text-blue-200 font-bold">إجمالي المدارس</p>
+            </div>
+            <div className="w-px h-8 bg-white/20 mx-2" />
+            <div className="text-center">
+              <p className="text-2xl font-black">{Number(totalStudents).toLocaleString('ar-EG')}</p>
+              <p className="text-[10px] text-blue-200 font-bold">إجمالي الطلاب</p>
+            </div>
+          </div>
+        </div>
       </header>
 
-      {/* Alert Banner */}
+      {/* ═══════ Alert Banner ═══════ */}
       {(dangerSchools > 0 || warningSchools > 0) && (
-        <div className="bg-red-50 border border-red-200 rounded-2xl p-5 flex items-start gap-4">
-          <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center shrink-0 mt-0.5">
-            <span className="text-red-600 text-xl">⚠️</span>
+        <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4 animate-scale-in">
+          <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center shrink-0 shadow-sm relative">
+             <span className="absolute inset-0 bg-red-400 rounded-xl animate-ping opacity-20" />
+             <span className="text-red-600 text-2xl relative z-10">⚠️</span>
           </div>
-          <div>
-            <p className="font-black text-red-900">تنبيهات الكثافة الطلابية</p>
-            <div className="flex gap-4 mt-2 flex-wrap">
+          <div className="flex-1">
+            <p className="font-black text-red-900 text-lg">تنبيهات الكثافة الطلابية</p>
+            <div className="flex flex-wrap gap-2 mt-2">
               {dangerSchools > 0 && (
-                <span className="px-3 py-1 bg-red-600 text-white rounded-full text-xs font-black">
+                <span className="px-3 py-1 bg-red-600 text-white rounded-lg text-xs font-black shadow-sm">
                   🔴 {dangerSchools} مدرسة في حالة خطر (&gt; 60 طالب/فصل)
                 </span>
               )}
               {warningSchools > 0 && (
-                <span className="px-3 py-1 bg-orange-500 text-white rounded-full text-xs font-black">
+                <span className="px-3 py-1 bg-orange-500 text-white rounded-lg text-xs font-black shadow-sm">
                   🟡 {warningSchools} مدرسة مرتفعة الكثافة (50-60 طالب/فصل)
                 </span>
               )}
             </div>
           </div>
+          <Link href="/dashboard/analytics" className="btn-danger whitespace-nowrap px-6 py-2.5 text-sm shrink-0">
+            عرض التفاصيل 🔍
+          </Link>
         </div>
       )}
 
-      {/* Stats Grid — 7 بطاقات */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-        <StatCard title="إجمالي الطلاب"   value={Number(totalStudents).toLocaleString('ar-EG')} color="blue"   icon="👥" />
-        <StatCard title="عدد المدارس"     value={totalSchools}           color="purple" icon="🏫" />
-        <StatCard title="متوسط الكثافة"   value={`${avgDensity}`}        color="orange" icon="📊" subtitle="طالب/فصل" />
-        <StatCard title="كثافة مرتفعة"    value={highDensityCount}        color="red"    icon="⚠️" />
-        <StatCard title="طلاب الدمج"      value={Number(totalInclusion).toLocaleString('ar-EG')}      color="teal"   icon="♿" />
-        <StatCard title="الوافدين"         value={Number(totalExpatriate).toLocaleString('ar-EG')}    color="gray"   icon="🌍" />
-        <StatCard title="الضعاف"          value={Number(totalLowPerformers).toLocaleString('ar-EG')} color="pink"   icon="📋" />
+      {/* ═══════ 7 Stat Cards ═══════ */}
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+        <StatCard title="إجمالي الطلاب" value={Number(totalStudents).toLocaleString('ar-EG')} icon="👥" gradient="from-blue-500 to-blue-600" />
+        <StatCard title="عدد المدارس" value={totalSchools} icon="🏫" gradient="from-indigo-500 to-indigo-600" />
+        <StatCard title="متوسط الكثافة" value={`${avgDensity}`} icon="📊" gradient={Number(avgDensity) > 50 ? 'from-red-500 to-red-600' : 'from-emerald-500 to-emerald-600'} subtitle="طالب/فصل" />
+        <StatCard title="كثافة مرتفعة" value={highDensityCount} icon="⚠️" gradient={highDensityCount > 0 ? 'from-orange-500 to-orange-600' : 'from-emerald-500 to-emerald-600'} />
+        <StatCard title="طلاب الدمج" value={Number(totalInclusion).toLocaleString('ar-EG')} icon="♿" gradient="from-teal-500 to-teal-600" />
+        <StatCard title="الوافدين" value={Number(totalExpatriate).toLocaleString('ar-EG')} icon="🌍" gradient="from-purple-500 to-purple-600" />
+        <StatCard title="الضعاف" value={Number(totalLowPerformers).toLocaleString('ar-EG')} icon="📋" gradient="from-pink-500 to-pink-600" />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-        {/* High Density Table */}
-        <section className="lg:col-span-3 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-lg font-black text-gray-900">مدارس الكثافة المرتفعة</h2>
-            <Link href="/dashboard/analytics" className="text-xs font-bold text-blue-600 hover:underline">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* ═══════ High Density Table ═══════ */}
+        <section className="lg:col-span-2 card p-6">
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-base font-black text-gray-900 flex items-center gap-2">
+              <span className="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center text-sm">🔥</span>
+              المدارس الأعلى كثافة
+            </h2>
+            <Link href="/dashboard/analytics" className="text-[11px] font-bold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-full hover:bg-blue-100 transition-colors">
               عرض التحليلات الكاملة ←
             </Link>
           </div>
+          
           {highDensity.length > 0 ? (
-            <div className="space-y-3">
-              {highDensity.map((school: any) => (
-                <Link
-                  key={`${school.school_id}-${school.grade_level}`}
-                  href={`/dashboard/schools/${school.school_id}`}
-                  className="flex items-center justify-between p-3.5 rounded-xl border hover:border-blue-200 hover:bg-blue-50 transition-all group"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`w-2 h-10 rounded-full ${
-                      school.density_status === 'خطر'    ? 'bg-red-500' :
-                      school.density_status === 'مرتفع'  ? 'bg-orange-500' : 'bg-yellow-400'
-                    }`} />
-                    <div>
-                      <p className="font-bold text-gray-900 text-sm group-hover:text-blue-700">{school.school_name_ar}</p>
-                      <p className="text-xs text-gray-500">{school.grade_level} — {school.total_students} طالب في {school.number_of_classes} فصول</p>
+            <div className="space-y-2">
+              {highDensity.map((school: any) => {
+                const isDanger = school.density_status === 'خطر';
+                const isWarning = school.density_status === 'مرتفع';
+                const colorTheme = isDanger ? 'red' : isWarning ? 'orange' : 'yellow';
+
+                return (
+                  <Link
+                    key={`${school.school_id}-${school.grade_level}`}
+                    href={`/dashboard/schools/${school.school_id}`}
+                    className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-xl border border-gray-100 hover:border-blue-200 hover:shadow-md bg-gray-50/50 hover:bg-white transition-all group gap-4"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className={`w-2 h-12 rounded-full bg-${colorTheme}-500 shadow-sm`} />
+                      <div>
+                        <p className="font-black text-gray-900 text-sm group-hover:text-blue-700 transition-colors">
+                          {school.school_name_ar}
+                        </p>
+                        <p className="text-[11px] font-bold text-gray-500 mt-1 flex items-center gap-1.5">
+                          <span className="bg-white border px-1.5 py-0.5 rounded text-gray-600">{school.grade_level}</span>
+                          <span>إجمالي: <span className="text-gray-900">{school.total_students}</span> طالب</span>
+                          <span className="text-gray-300">|</span>
+                          <span><span className="text-gray-900">{school.number_of_classes}</span> فصول</span>
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                  <div className="text-center">
-                    <p className={`text-2xl font-black ${
-                      school.density_status === 'خطر' ? 'text-red-600' :
-                      school.density_status === 'مرتفع' ? 'text-orange-500' : 'text-yellow-600'
-                    }`}>{school.density_per_class}</p>
-                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
-                      school.density_status === 'خطر'   ? 'bg-red-100 text-red-600' :
-                      school.density_status === 'مرتفع' ? 'bg-orange-100 text-orange-600' : 'bg-yellow-100 text-yellow-700'
-                    }`}>{school.density_status}</span>
-                  </div>
-                </Link>
-              ))}
+                    <div className="flex items-center gap-3 sm:ml-auto bg-white border border-gray-100 p-2 rounded-lg shadow-sm">
+                      <div className="text-center px-3">
+                        <p className={`text-xl font-black text-${colorTheme}-600 leading-none`}>{school.density_per_class}</p>
+                        <p className="text-[9px] font-black text-gray-400 mt-1 uppercase tracking-widest">طالب/فصل</p>
+                      </div>
+                      <span className={`text-[10px] font-black px-2.5 py-1.5 rounded-md bg-${colorTheme}-100 text-${colorTheme}-700`}>
+                        {school.density_status}
+                      </span>
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
           ) : (
-            <div className="text-center py-12">
-              <p className="text-4xl mb-3">✅</p>
-              <p className="font-bold text-gray-400">لا توجد مدارس ذات كثافة مرتفعة</p>
+            <div className="text-center py-16">
+              <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-4xl">✅</span>
+              </div>
+              <p className="font-black text-emerald-900 text-lg">الوضع مستقر</p>
+              <p className="text-emerald-600 font-medium text-sm mt-1">لا توجد مدارس ذات كثافة طلابية مرتفعة حالياً.</p>
             </div>
           )}
         </section>
 
-        {/* Quick Actions */}
-        <section className="lg:col-span-2 space-y-4">
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-            <h2 className="text-lg font-black text-gray-900 mb-5">روابط سريعة</h2>
+        {/* ═══════ Quick Actions & Links ═══════ */}
+        <div className="space-y-5">
+          {/* Quick Links Card */}
+          <section className="card p-5">
+            <h2 className="text-base font-black text-gray-900 mb-4 flex items-center gap-2">
+              <span className="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center text-sm">⚡</span>
+              روابط سريعة
+            </h2>
             <div className="space-y-2">
-              <QuickLink href="/dashboard/schools/new"   label="إضافة مدرسة جديدة" color="blue"   icon="+" />
-              <QuickLink href="/dashboard/upload"        label="رفع ملف Excel"       color="green"  icon="↑" />
-              <QuickLink href="/dashboard/analytics"     label="التحليلات والرسوم"   color="purple" icon="📊" />
-              <QuickLink href="/dashboard/reports"       label="طباعة التقارير"      color="orange" icon="🖨" />
+              <QuickLink href="/dashboard/schools/new" label="إضافة مدرسة جديدة" color="emerald" icon="➕" desc="تسجيل مدرسة في القاعدة" />
+              <QuickLink href="/dashboard/upload" label="استيراد البيانات" color="blue" icon="⬆️" desc="رفع ملفات Excel" />
+              <QuickLink href="/dashboard/analytics" label="الرسوم والتحليلات" color="purple" icon="📈" desc="مؤشرات الأداء" />
+              <QuickLink href="/dashboard/reports" label="مركز التقارير" color="orange" icon="🖨️" desc="طباعة وتصدير الكشوف" />
             </div>
-          </div>
+          </section>
 
-          <div className="bg-gradient-to-br from-blue-600 to-blue-800 p-6 rounded-2xl text-white shadow-xl shadow-blue-200">
-            <p className="text-sm font-bold opacity-80 mb-1">السنة الدراسية الحالية</p>
-            <p className="text-3xl font-black">2025-2026</p>
-            <div className="mt-4 pt-4 border-t border-blue-500 grid grid-cols-2 gap-3 text-center">
-              <div>
-                <p className="text-xl font-black">{totalSchools}</p>
-                <p className="text-[10px] opacity-70 font-bold">مدرسة</p>
-              </div>
-              <div>
-                <p className="text-xl font-black">{Number(totalStudents).toLocaleString('ar-EG')}</p>
-                <p className="text-[10px] opacity-70 font-bold">طالب</p>
-              </div>
-            </div>
-          </div>
-        </section>
+          {/* Quick Export Card */}
+          <section className="bg-gradient-to-br from-gray-900 to-gray-800 p-6 rounded-2xl text-white shadow-xl relative overflow-hidden group hover:shadow-2xl transition-all">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl group-hover:bg-white/10 transition-colors" />
+            <h2 className="text-base font-black mb-1 relative z-10 flex items-center gap-2">
+              <span>📥</span> تصدير الإدارة بالكامل
+            </h2>
+            <p className="text-xs text-gray-400 mb-4 relative z-10">تنزيل نسخة Excel لجميع المدارس</p>
+            
+            <a href="/api/admin-export" target="_blank" rel="noopener noreferrer" 
+               className="relative z-10 block w-full bg-emerald-500 hover:bg-emerald-400 text-emerald-950 text-center font-black py-3 rounded-xl transition-colors shadow-lg shadow-emerald-500/20">
+              تنزيل الآن (Excel)
+            </a>
+          </section>
+        </div>
       </div>
     </div>
   );
 }
 
-function StatCard({ title, value, subtitle, color, icon, span }: any) {
-  const colors: Record<string, string> = {
-    blue:   'from-blue-500 to-blue-600',
-    purple: 'from-purple-500 to-purple-600',
-    orange: 'from-orange-500 to-orange-600',
-    red:    'from-red-500 to-red-600',
-    teal:   'from-teal-500 to-teal-600',
-    gray:   'from-gray-500 to-gray-600',
-    pink:   'from-pink-500 to-pink-600',
-  };
+function StatCard({ title, value, icon, gradient, subtitle }: any) {
   return (
-    <div className={`bg-white p-5 rounded-2xl border border-gray-100 shadow-sm ${span ? 'col-span-2 md:col-span-1' : ''}`}>
-      <div className="flex items-start justify-between mb-3">
-        <p className="text-xs font-bold text-gray-500">{title}</p>
-        <span className="text-xl">{icon}</span>
+    <div className="card p-4 text-center hover:shadow-md transition-shadow group cursor-default">
+      <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center text-white text-lg mx-auto shadow-md group-hover:scale-110 transition-transform`}>
+        {icon}
       </div>
-      <div className="flex items-baseline gap-1">
-        <p className="text-2xl font-black text-gray-900">{value}</p>
-        {subtitle && <span className="text-[10px] text-gray-400 font-bold">{subtitle}</span>}
-      </div>
-      <div className={`mt-3 h-1 rounded-full bg-gradient-to-r ${colors[color]}`} />
+      <p className="text-xl font-black text-gray-900 mt-2">{value}</p>
+      <p className="text-[10px] font-bold text-gray-400">{title}</p>
+      {subtitle && <p className="text-[9px] text-gray-300">{subtitle}</p>}
     </div>
   );
 }
 
-function QuickLink({ href, label, color, icon }: any) {
-  const colors: Record<string, string> = {
-    blue:   'hover:bg-blue-50 hover:border-blue-200 hover:text-blue-700',
-    green:  'hover:bg-green-50 hover:border-green-200 hover:text-green-700',
-    purple: 'hover:bg-purple-50 hover:border-purple-200 hover:text-purple-700',
-    orange: 'hover:bg-orange-50 hover:border-orange-200 hover:text-orange-700',
+function QuickLink({ href, label, desc, color, icon }: any) {
+  const themes: Record<string, string> = {
+    blue:    'hover:bg-blue-50 border-blue-100 text-blue-700 hover:border-blue-200',
+    emerald: 'hover:bg-emerald-50 border-emerald-100 text-emerald-700 hover:border-emerald-200',
+    purple:  'hover:bg-purple-50 border-purple-100 text-purple-700 hover:border-purple-200',
+    orange:  'hover:bg-orange-50 border-orange-100 text-orange-700 hover:border-orange-200',
   };
   return (
-    <Link href={href} className={`flex items-center gap-3 p-3 border border-gray-100 rounded-xl text-sm font-bold text-gray-600 transition-all ${colors[color]}`}>
-      <span className="text-base w-5 text-center">{icon}</span>
-      {label}
+    <Link href={href} className={`flex items-center gap-3 p-3 border rounded-xl transition-all ${themes[color]}`}>
+      <div className={`w-8 h-8 rounded-lg bg-white shadow-sm flex items-center justify-center shrink-0`}>
+        <span className="text-sm">{icon}</span>
+      </div>
+      <div>
+        <p className="text-sm font-black leading-tight">{label}</p>
+        <p className="text-[10px] font-bold opacity-60 mt-0.5">{desc}</p>
+      </div>
     </Link>
   );
 }

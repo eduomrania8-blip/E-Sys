@@ -8,6 +8,10 @@
 /* ─── Base ───────────────────────────────────────── */
 :root {
   --font-main: 'Cairo', sans-serif;
+  --primary: #2563eb;
+  --primary-light: #dbeafe;
+  --emerald: #059669;
+  --emerald-light: #d1fae5;
 }
 
 * {
@@ -22,34 +26,104 @@ html, body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* ─── Input Utility ──────────────────────────────── */
+/* ─── Component Classes ──────────────────────────── */
 @layer components {
+  .input-field {
+    @apply w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium
+           focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white
+           outline-none transition-all duration-200 text-gray-800 placeholder-gray-400;
+  }
+
+  /* Legacy alias */
   .input {
     @apply w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium
            focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white
-           outline-none transition-all duration-150 text-gray-800 placeholder-gray-400;
+           outline-none transition-all duration-200 text-gray-800 placeholder-gray-400;
   }
 
   .btn-primary {
     @apply px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-black
-           rounded-xl shadow-lg shadow-blue-200 transition-all duration-150
-           disabled:opacity-50 disabled:cursor-not-allowed;
+           rounded-xl shadow-lg shadow-blue-200 transition-all duration-200
+           disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98];
   }
 
   .btn-secondary {
     @apply px-6 py-2.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-sm font-bold
-           rounded-xl transition-all duration-150;
+           rounded-xl transition-all duration-200 active:scale-[0.98];
+  }
+
+  .btn-danger {
+    @apply px-5 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-bold
+           rounded-xl shadow-lg shadow-red-200 transition-all duration-200
+           disabled:opacity-50 active:scale-[0.98];
   }
 
   .card {
     @apply bg-white rounded-2xl border border-gray-100 shadow-sm;
   }
 
+  .glass-card {
+    @apply bg-white/80 backdrop-blur-lg rounded-2xl border border-white/50 shadow-xl;
+  }
+
+  /* Badges */
   .badge-danger   { @apply px-2.5 py-0.5 bg-red-100 text-red-700 text-xs font-black rounded-full; }
   .badge-warning  { @apply px-2.5 py-0.5 bg-orange-100 text-orange-700 text-xs font-black rounded-full; }
   .badge-success  { @apply px-2.5 py-0.5 bg-green-100 text-green-700 text-xs font-black rounded-full; }
   .badge-info     { @apply px-2.5 py-0.5 bg-blue-100 text-blue-700 text-xs font-black rounded-full; }
   .badge-neutral  { @apply px-2.5 py-0.5 bg-gray-100 text-gray-700 text-xs font-black rounded-full; }
+
+  /* Tooltip */
+  .tooltip-trigger {
+    @apply relative cursor-help;
+  }
+  .tooltip-trigger::after {
+    content: attr(data-tooltip);
+    @apply absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5
+           bg-gray-900 text-white text-[10px] font-bold rounded-lg
+           opacity-0 pointer-events-none transition-all duration-200
+           whitespace-nowrap z-50 shadow-xl;
+  }
+  .tooltip-trigger:hover::after {
+    @apply opacity-100;
+  }
+
+  /* Form Section Header */
+  .form-section-title {
+    @apply flex items-center gap-2 text-sm font-black text-gray-800 mb-4 pb-2 border-b border-gray-100;
+  }
+
+  /* Stat Card Micro */
+  .stat-micro {
+    @apply flex items-center gap-3 p-3 rounded-xl border border-gray-100 bg-gradient-to-br from-white to-gray-50/50;
+  }
+
+  /* Toast */
+  .toast {
+    @apply fixed top-6 left-1/2 -translate-x-1/2 z-[9999] px-6 py-3 rounded-2xl text-sm font-bold shadow-2xl;
+  }
+  .toast-success { @apply toast bg-emerald-600 text-white; }
+  .toast-error   { @apply toast bg-red-500 text-white; }
+
+  /* Confirm Modal */
+  .modal-overlay {
+    @apply fixed inset-0 z-[9998] bg-black/40 backdrop-blur-sm flex items-center justify-center;
+  }
+  .modal-content {
+    @apply bg-white rounded-2xl shadow-2xl p-6 max-w-md w-full mx-4 space-y-4;
+  }
+
+  /* Number input clean */
+  .num-input {
+    @apply w-14 text-center font-mono text-xs py-2 rounded-lg border border-transparent
+           focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all;
+  }
+
+  /* Sticky Save Bar */
+  .sticky-save-bar {
+    @apply sticky bottom-0 bg-white/95 backdrop-blur-md border-t border-gray-100
+           -mx-6 px-6 py-4 flex items-center justify-between shadow-xl z-30;
+  }
 }
 
 /* ─── Scrollbar ──────────────────────────────────── */
@@ -58,14 +132,58 @@ html, body {
 ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; }
 ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
-/* ─── Page Transitions ───────────────────────────── */
+/* ─── Animations ─────────────────────────────────── */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
-.animate-in {
-  animation: fadeIn 0.3s ease-out both;
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-12px); max-height: 0; }
+  to   { opacity: 1; transform: translateY(0); max-height: 2000px; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgba(37,99,235,0.4); }
+  70% { box-shadow: 0 0 0 6px rgba(37,99,235,0); }
+  100% { box-shadow: 0 0 0 0 rgba(37,99,235,0); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-in      { animation: fadeIn 0.3s ease-out both; }
+.animate-slide-down { animation: slideDown 0.35s ease-out both; }
+.animate-slide-up   { animation: slideUp 0.3s ease-out both; }
+.animate-scale-in   { animation: scaleIn 0.25s ease-out both; }
+.animate-pulse-ring { animation: pulse-ring 1.5s ease-out infinite; }
+
+.skeleton-shimmer {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* Number input arrows hide */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
 }
 
 /* ─── Print ──────────────────────────────────────── */

@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
       }));
 
       const buf = buildExcelExport({ district, schoolName, address, rows });
-      return new NextResponse(buf, {
+      return new NextResponse(new Uint8Array(buf), {
         headers: {
           'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
           'Content-Disposition': `attachment; filename="كشف_${schoolName}.xlsx"`,
@@ -62,7 +62,7 @@ export async function GET(req: NextRequest) {
     }));
 
     const buf = buildExcelExport({ district: headerDistrict, schoolName: headerSchool, address: '', rows });
-    return new NextResponse(buf, {
+    return new NextResponse(new Uint8Array(buf), {
       headers: {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         'Content-Disposition': 'attachment; filename="كشف_كل_المدارس.xlsx"',

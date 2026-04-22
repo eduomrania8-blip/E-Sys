@@ -79,8 +79,9 @@ export async function POST(req: NextRequest) {
             // إزالة التكرارات — نحتفظ بآخر صف لكل grade_level
             const deduped = new Map<string, any>();
             for (const r of result.data) {
-              if (!r.grade_level || r.grade_level.trim() === '') continue; // تجاهل الصفوف بدون grade
-              deduped.set(r.grade_level, {
+              const gl = r.grade_level as string | undefined;
+              if (!gl || gl.trim() === '') continue; // تجاهل الصفوف بدون grade
+              deduped.set(gl, {
                 school_id: schoolId,
                 academic_year: academicYear,
                 ...r,
@@ -151,8 +152,9 @@ export async function POST(req: NextRequest) {
           case 'leaders': {
             const deduped = new Map<string, any>();
             for (const r of result.data) {
-              const key = r.national_id && r.national_id.length >= 14
-                ? r.national_id
+              const nid = String(r.national_id ?? '');
+              const key = nid.length >= 14
+                ? nid
                 : `auto_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
               deduped.set(key, { school_id: schoolId, ...r, national_id: key });
             }
@@ -169,8 +171,9 @@ export async function POST(req: NextRequest) {
           case 'staff': {
             const deduped = new Map<string, any>();
             for (const r of result.data) {
-              const key = r.national_id && r.national_id.length >= 14
-                ? r.national_id
+              const nid = String(r.national_id ?? '');
+              const key = nid.length >= 14
+                ? nid
                 : `auto_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
               deduped.set(key, { school_id: schoolId, ...r, national_id: key });
             }

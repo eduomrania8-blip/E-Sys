@@ -328,6 +328,16 @@ export type ClassStat = Database['public']['Tables']['class_statistics']['Row'];
 export type SchoolSummary = Database['public']['Views']['school_summary']['Row'];
 export type HighDensitySchool = Database['public']['Views']['high_density_schools']['Row'];
 
+// ─── Session ──────────────────────────────────────────────────
+
+export type SessionUser = {
+  role: 'admin' | 'school';
+  schoolId?: string;
+  schoolCode?: string;
+  schoolName?: string;
+  schoolType?: SchoolType;
+};
+
 // Legacy compat
 export type ParsedStudent = {
   rowNum: number;
@@ -339,4 +349,45 @@ export type ParsedStudent = {
 export type ParsedExcelData = {
   header: { district: string; schoolName: string; address: string };
   students: ParsedStudent[];
+};
+
+// ─── Student / Admin Types ───────────────────────────────────────
+
+export type Student = {
+  id: string;
+  upload_id: string;
+  school_id: string;
+  row_num: number;
+  name: string;
+  grade: string | null;
+  class_room: string | null;
+  created_at: string;
+};
+
+export type PaginatedResponse<T> = {
+  items: T[];
+  total: number;
+  page: number;
+  perPage: number;
+  totalPages: number;
+};
+
+export type AdminStats = {
+  totalStudents: number;
+  totalSchools: number;
+  uploadedSchools: number;
+  pendingSchools: number;
+  byType: Record<string, number>;
+  byGrade: Record<string, number>;
+};
+
+export type SchoolWithStatus = {
+  id: string;
+  code: string;
+  name: string;
+  type: string;
+  district?: string;
+  studentCount: number;
+  uploadCount: number;
+  lastUpload: string | null;
 };

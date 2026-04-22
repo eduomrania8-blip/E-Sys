@@ -1,20 +1,31 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 
 type ListType = 'low' | 'inclusion' | 'expatriate' | 'refugee';
 
+const LIST_TYPES = [
+  { id: 'low' as ListType, label: 'الضعاف', icon: '📋', color: 'red', description: 'الطلاب ضعاف المستوى الدراسي' },
+  { id: 'inclusion' as ListType, label: 'الدمج', icon: '♿', color: 'emerald', description: 'طلاب ذوي الاحتياجات الخاصة' },
+  { id: 'expatriate' as ListType, label: 'الوافدين', icon: '🌍', color: 'blue', description: 'الطلاب غير المصريين' },
+  { id: 'refugee' as ListType, label: 'اللاجئين', icon: '🏠', color: 'purple', description: 'الطلاب اللاجئين' },
+];
+
 export default function StudentsListForm({ schoolId }: { schoolId: string }) {
-  const supabase = createBrowserClient(
+  const supabase = useMemo(() => createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  ), []);
+
   const [listType, setListType] = useState<ListType>('low');
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [students, setStudents] = useState<any[]>([]);
-  const [msg, setMsg] = useState({ text: '', type: '' });
+  const [toast, setToast] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [showForm, setShowForm] = useState(false);
 
   const [formData, setFormData] = useState({
     student_full_name: '',
@@ -28,6 +39,11 @@ export default function StudentsListForm({ schoolId }: { schoolId: string }) {
     notes: ''
   });
 
+  const showToastMsg = useCallback((text: string, type: 'success' | 'error') => {
+    setToast({ text, type });
+    setTimeout(() => setToast(null), 4000);
+  }, []);
+
   const getTableName = (type: ListType) => {
     switch(type) {
       case 'low': return 'low_performer_students';
@@ -37,52 +53,60 @@ export default function StudentsListForm({ schoolId }: { schoolId: string }) {
     }
   };
 
-  const fetchStudents = async () => {
+  const fetchStudents = useCallback(async () => {
     setFetching(true);
     const { data } = await supabase.from(getTableName(listType)).select('*').eq('school_id', schoolId).eq('academic_year', '2025-2026').order('created_at', { ascending: false });
     if (data) setStudents(data);
     setFetching(false);
-  };
+  }, [schoolId, listType, supabase]);
 
-  useEffect(() => { fetchStudents(); }, [schoolId, listType]);
+  useEffect(() => { fetchStudents(); }, [fetchStudents]);
+
+  const filteredStudents = useMemo(() => {
+    if (!searchQuery.trim()) return students;
+    const q = searchQuery.trim().toLowerCase();
+    return students.filter(s =>
+      s.student_full_name?.toLowerCase().includes(q) ||
+      s.grade_level?.includes(q)
+    );
+  }, [students, searchQuery]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (formData.student_full_name.length < 3) {
-      setMsg({ text: 'اسم الطالب قصير جداً', type: 'error' });
+    if (formData.student_full_name.trim().length < 3) {
+      showToastMsg('⚠️ اسم الطالب يجب أن يكون 3 حروف على الأقل', 'error');
       return;
     }
     setLoading(true);
-    setMsg({ text: '', type: '' });
 
     const payload: any = {
       school_id: schoolId,
       academic_year: '2025-2026',
-      student_full_name: formData.student_full_name,
+      student_full_name: formData.student_full_name.trim(),
       grade_level: formData.grade_level,
-      class_name: formData.class_name,
+      class_name: formData.class_name || null,
     };
 
-    if (listType === 'low') payload.notes = formData.notes;
+    if (listType === 'low') payload.notes = formData.notes || null;
     if (listType === 'inclusion') {
-      payload.national_id = formData.national_id;
-      payload.disability_type = formData.disability_type;
+      payload.national_id = formData.national_id || null;
+      payload.disability_type = formData.disability_type || null;
     }
     if (listType === 'expatriate') {
-      payload.passport_number = formData.passport_number;
-      payload.country = formData.country;
+      payload.passport_number = formData.passport_number || null;
+      payload.country = formData.country || null;
     }
     if (listType === 'refugee') {
-      payload.country = formData.country;
-      payload.refugee_classification = formData.refugee_classification;
+      payload.country = formData.country || null;
+      payload.refugee_classification = formData.refugee_classification || null;
     }
 
-    const { error } = await supabase.from(getTableName(listType)).upsert(payload);
-    
+    const { error } = await supabase.from(getTableName(listType)).insert(payload);
+
     if (error) {
-      setMsg({ text: `خطأ في الحفظ: ${error.message}`, type: 'error' });
+      showToastMsg(`❌ خطأ في الحفظ: ${error.message}`, 'error');
     } else {
-      setMsg({ text: 'تم تسجيل الطالب بنجاح ✅', type: 'success' });
+      showToastMsg('✅ تم تسجيل الطالب بنجاح', 'success');
       setFormData({ ...formData, student_full_name: '', national_id: '', passport_number: '', country: '', disability_type: '', refugee_classification: '', notes: '' });
       fetchStudents();
     }
@@ -90,152 +114,270 @@ export default function StudentsListForm({ schoolId }: { schoolId: string }) {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('هل أنت متأكد من حذف هذا السجل؟')) return;
     await supabase.from(getTableName(listType)).delete().eq('id', id);
+    showToastMsg('🗑️ تم حذف السجل', 'success');
+    setConfirmDelete(null);
     fetchStudents();
   };
 
-  const grades = ['الأول','الثاني','الثالث','الرابع','الخامس','السادس','الأول اعدادي','الثاني اعدادي','الثالث اعدادي','الأول ثانوي','الثاني ثانوي','الثالث ثانوي'];
+  const grades = ['KG1', 'KG2', 'الأول','الثاني','الثالث','الرابع','الخامس','السادس','الأول اعدادي','الثاني اعدادي','الثالث اعدادي','الأول ثانوي','الثاني ثانوي','الثالث ثانوي'];
+  const activeListInfo = LIST_TYPES.find(l => l.id === listType)!;
 
   return (
-    <div className="space-y-6 animate-in fade-in" dir="rtl">
-      {/* Selector */}
-      <div className="flex gap-2 p-1 bg-gray-100 rounded-xl w-fit">
-        {(['low', 'inclusion', 'expatriate', 'refugee'] as ListType[]).map(t => (
-          <button 
-            key={t}
-            onClick={() => setListType(t)}
-            className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${listType === t ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+    <div className="space-y-5 animate-in" dir="rtl">
+      {/* Toast */}
+      {toast && (
+        <div className={`${toast.type === 'success' ? 'toast-success' : 'toast-error'} animate-slide-down`}>
+          {toast.text}
+        </div>
+      )}
+
+      {/* Delete Modal */}
+      {confirmDelete && (
+        <div className="modal-overlay animate-scale-in" onClick={() => setConfirmDelete(null)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} dir="rtl">
+            <div className="text-center">
+              <span className="text-4xl block mb-3">⚠️</span>
+              <h3 className="text-lg font-black text-gray-900">تأكيد الحذف</h3>
+              <p className="text-sm text-gray-500 mt-2">هل أنت متأكد من حذف هذا الطالب؟</p>
+            </div>
+            <div className="flex gap-3 pt-2">
+              <button onClick={() => handleDelete(confirmDelete)} className="btn-danger flex-1">🗑️ نعم، احذف</button>
+              <button onClick={() => setConfirmDelete(null)} className="btn-secondary flex-1">إلغاء</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══════ List Type Selector ═══════ */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {LIST_TYPES.map(t => (
+          <button
+            key={t.id}
+            onClick={() => { setListType(t.id); setSearchQuery(''); }}
+            className={`p-3 rounded-xl border-2 text-center transition-all ${
+              listType === t.id
+                ? `border-${t.color}-400 bg-${t.color}-50 shadow-md`
+                : 'border-gray-100 hover:border-gray-200 hover:shadow-sm'
+            }`}
           >
-            {t === 'low' ? 'الضعاف' : t === 'inclusion' ? 'الدمج' : t === 'expatriate' ? 'الوافدين' : 'اللاجئين'}
+            <span className="text-2xl block mb-1">{t.icon}</span>
+            <p className={`text-xs font-black ${listType === t.id ? `text-${t.color}-700` : 'text-gray-600'}`}>{t.label}</p>
+            <p className="text-[9px] text-gray-400 mt-0.5">{t.description}</p>
           </button>
         ))}
       </div>
 
-      {msg.text && (
-        <div className={`p-4 rounded-xl text-sm font-bold ${msg.type === 'error' ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-600'}`}>
-          {msg.text}
-        </div>
-      )}
-
-      {/* Form */}
-      <form onSubmit={handleSubmit} className="p-6 bg-white border border-gray-100 shadow-sm rounded-2xl grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="md:col-span-1">
-          <label className="block text-xs font-bold text-gray-500 mb-1">اسم الطالب *</label>
-          <input required type="text" value={formData.student_full_name} onChange={e => setFormData({...formData, student_full_name: e.target.value})} className="input-field w-full" placeholder="الاسم الرباعي" />
-        </div>
-        <div>
-          <label className="block text-xs font-bold text-gray-500 mb-1">الصف الدراسي</label>
-          <select value={formData.grade_level} onChange={e => setFormData({...formData, grade_level: e.target.value})} className="input-field w-full">
-            {grades.map(g => <option key={g} value={g}>{g}</option>)}
-          </select>
-        </div>
-        <div>
-          <label className="block text-xs font-bold text-gray-500 mb-1">الفصل (مثال: 1/1)</label>
-          <input type="text" value={formData.class_name} onChange={e => setFormData({...formData, class_name: e.target.value})} className="input-field w-full" placeholder="اختياري" />
-        </div>
-
-        {listType === 'inclusion' && (
-          <>
-            <div>
-              <label className="block text-xs font-bold text-gray-500 mb-1">الرقم القومي</label>
-              <input type="text" value={formData.national_id} onChange={e => setFormData({...formData, national_id: e.target.value})} className="input-field w-full" maxLength={14} />
+      {/* Counter + Controls */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className={`stat-micro`}>
+            <div className={`w-9 h-9 rounded-lg bg-${activeListInfo.color}-100 flex items-center justify-center text-lg`}>
+              {activeListInfo.icon}
             </div>
             <div>
-              <label className="block text-xs font-bold text-gray-500 mb-1">نوع الإعاقة</label>
-              <select value={formData.disability_type} onChange={e => setFormData({...formData, disability_type: e.target.value})} className="input-field w-full">
-                <option value="">اختر...</option>
-                <option value="ذهني">ذهني</option>
-                <option value="سمعي">سمعي</option>
-                <option value="بصري">بصري</option>
-                <option value="حركي">حركي</option>
-                <option value="متعدد">متعدد</option>
+              <p className="text-base font-black text-gray-900">{students.length}</p>
+              <p className="text-[10px] text-gray-400 font-bold">طالب في قائمة {activeListInfo.label}</p>
+            </div>
+          </div>
+
+          {/* Search */}
+          <div className="relative">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              placeholder="بحث بالاسم..."
+              className="input-field pr-9 text-xs w-48"
+            />
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔍</span>
+          </div>
+        </div>
+
+        <button onClick={() => setShowForm(!showForm)}
+          className={`text-sm font-bold px-5 py-2.5 rounded-xl transition-all flex items-center gap-2
+            ${showForm ? 'bg-gray-100 text-gray-600' : `bg-${activeListInfo.color}-600 text-white shadow-lg hover:opacity-90`}`}>
+          {showForm ? '✕ إلغاء' : `+ إضافة طالب`}
+        </button>
+      </div>
+
+      {/* ═══════ Form ═══════ */}
+      {showForm && (
+        <form onSubmit={handleSubmit} className={`p-5 bg-${activeListInfo.color}-50/30 border-2 border-${activeListInfo.color}-200 rounded-2xl animate-slide-down space-y-4`}>
+          <h3 className={`font-black text-${activeListInfo.color}-900 text-sm flex items-center gap-2`}>
+            ✨ إضافة طالب إلى قائمة {activeListInfo.label}
+          </h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div>
+              <label className="block text-[11px] font-bold text-gray-500 mb-1">اسم الطالب *</label>
+              <input required type="text" value={formData.student_full_name}
+                onChange={e => setFormData({...formData, student_full_name: e.target.value})}
+                className="input-field w-full" placeholder="الاسم الرباعي" />
+            </div>
+            <div>
+              <label className="block text-[11px] font-bold text-gray-500 mb-1">الصف الدراسي</label>
+              <select value={formData.grade_level}
+                onChange={e => setFormData({...formData, grade_level: e.target.value})}
+                className="input-field w-full">
+                {grades.map(g => <option key={g} value={g}>{g}</option>)}
               </select>
             </div>
-          </>
-        )}
+            <div>
+              <label className="block text-[11px] font-bold text-gray-500 mb-1">الفصل</label>
+              <input type="text" value={formData.class_name}
+                onChange={e => setFormData({...formData, class_name: e.target.value})}
+                className="input-field w-full" placeholder="مثال: 1/1" />
+            </div>
 
-        {listType === 'expatriate' && (
-          <>
-            <div>
-              <label className="block text-xs font-bold text-gray-500 mb-1">رقم الجواز</label>
-              <input type="text" value={formData.passport_number} onChange={e => setFormData({...formData, passport_number: e.target.value})} className="input-field w-full" />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-gray-500 mb-1">الجنسية</label>
-              <input type="text" value={formData.country} onChange={e => setFormData({...formData, country: e.target.value})} className="input-field w-full" placeholder="مثال: سوري" />
-            </div>
-          </>
-        )}
+            {/* Dynamic fields per list type */}
+            {listType === 'inclusion' && (
+              <>
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-500 mb-1">الرقم القومي</label>
+                  <input type="text" value={formData.national_id}
+                    onChange={e => setFormData({...formData, national_id: e.target.value.replace(/\D/g, '').slice(0, 14)})}
+                    className="input-field w-full font-mono" maxLength={14} dir="ltr" />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-500 mb-1">نوع الإعاقة</label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {['ذهني', 'سمعي', 'بصري', 'حركي', 'متعدد'].map(d => (
+                      <button key={d} type="button"
+                        onClick={() => setFormData({...formData, disability_type: d})}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                          formData.disability_type === d ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                        {d}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
 
-        {listType === 'refugee' && (
-          <>
-            <div>
-              <label className="block text-xs font-bold text-gray-500 mb-1">الجنسية</label>
-              <input type="text" value={formData.country} onChange={e => setFormData({...formData, country: e.target.value})} className="input-field w-full" />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-gray-500 mb-1">التصنيف</label>
-              <input type="text" value={formData.refugee_classification} onChange={e => setFormData({...formData, refugee_classification: e.target.value})} className="input-field w-full" placeholder="سوداني، يمني..." />
-            </div>
-          </>
-        )}
+            {listType === 'expatriate' && (
+              <>
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-500 mb-1">رقم الجواز</label>
+                  <input type="text" value={formData.passport_number}
+                    onChange={e => setFormData({...formData, passport_number: e.target.value})}
+                    className="input-field w-full font-mono" dir="ltr" />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-500 mb-1">الجنسية</label>
+                  <input type="text" value={formData.country}
+                    onChange={e => setFormData({...formData, country: e.target.value})}
+                    className="input-field w-full" placeholder="مثال: سوري" />
+                </div>
+              </>
+            )}
 
-        {listType === 'low' && (
-          <div className="md:col-span-2">
-            <label className="block text-xs font-bold text-gray-500 mb-1">ملاحظات / سبب الضعف</label>
-            <input type="text" value={formData.notes} onChange={e => setFormData({...formData, notes: e.target.value})} className="input-field w-full" placeholder="..." />
+            {listType === 'refugee' && (
+              <>
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-500 mb-1">الجنسية</label>
+                  <input type="text" value={formData.country}
+                    onChange={e => setFormData({...formData, country: e.target.value})}
+                    className="input-field w-full" />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-500 mb-1">التصنيف</label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {['سوري', 'فلسطيني', 'سوداني', 'يمني', 'أجنبي', 'أخرى'].map(c => (
+                      <button key={c} type="button"
+                        onClick={() => setFormData({...formData, refugee_classification: c})}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                          formData.refugee_classification === c ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                        {c}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {listType === 'low' && (
+              <div className="md:col-span-2">
+                <label className="block text-[11px] font-bold text-gray-500 mb-1">ملاحظات / سبب الضعف</label>
+                <input type="text" value={formData.notes}
+                  onChange={e => setFormData({...formData, notes: e.target.value})}
+                  className="input-field w-full" placeholder="مثال: ضعف في القراءة والكتابة" />
+              </div>
+            )}
           </div>
-        )}
 
-        <div className="md:col-span-3 pt-2">
-          <button type="submit" disabled={loading} className="btn-primary w-full md:w-auto px-12">
-            {loading ? 'جاري الحفظ...' : `إضافة إلى قائمة ${listType === 'low' ? 'الضعاف' : listType === 'inclusion' ? 'الدمج' : listType === 'expatriate' ? 'الوافدين' : 'اللاجئين'}`}
-          </button>
-        </div>
-      </form>
+          <div className="flex gap-3 pt-2">
+            <button type="submit" disabled={loading} className="btn-primary flex items-center gap-2 px-8">
+              {loading ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />جاري الإضافة...</> : `✅ إضافة إلى ${activeListInfo.label}`}
+            </button>
+            <button type="button" onClick={() => setShowForm(false)} className="btn-secondary text-sm">إلغاء</button>
+          </div>
+        </form>
+      )}
 
-      {/* Table */}
-      <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden min-h-[300px]">
+      {/* ═══════ Table ═══════ */}
+      <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
         {fetching ? (
-          <div className="text-center py-20 text-gray-400">جاري تحميل القائمة...</div>
-        ) : (
+          <div className="space-y-2 p-4">
+            {[...Array(5)].map((_, i) => <div key={i} className="h-12 skeleton-shimmer rounded-lg" />)}
+          </div>
+        ) : filteredStudents.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-right text-sm">
               <thead className="bg-gray-50 text-gray-500 border-b border-gray-100 font-black">
                 <tr>
-                  <th className="px-6 py-4">اسم الطالب</th>
-                  <th className="px-6 py-4">الصف</th>
-                  <th className="px-6 py-4">الفصل</th>
-                  {listType === 'low' && <th className="px-6 py-4">الملاحظات</th>}
-                  {listType === 'inclusion' && <th className="px-6 py-4">الإعاقة</th>}
-                  {listType === 'expatriate' && <th className="px-6 py-4">الجنسية</th>}
-                  {listType === 'refugee' && <th className="px-6 py-4">التصنيف</th>}
-                  <th className="px-6 py-4 text-center">إجراءات</th>
+                  <th className="px-5 py-4 text-xs">#</th>
+                  <th className="px-5 py-4 text-xs">اسم الطالب</th>
+                  <th className="px-5 py-4 text-xs">الصف</th>
+                  <th className="px-5 py-4 text-xs">الفصل</th>
+                  {listType === 'low' && <th className="px-5 py-4 text-xs">الملاحظات</th>}
+                  {listType === 'inclusion' && <th className="px-5 py-4 text-xs">نوع الإعاقة</th>}
+                  {listType === 'expatriate' && <th className="px-5 py-4 text-xs">الجنسية</th>}
+                  {listType === 'refugee' && <th className="px-5 py-4 text-xs">التصنيف</th>}
+                  <th className="px-5 py-4 text-xs text-center">إجراءات</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
-                {students.map(s => (
-                  <tr key={s.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 font-bold text-gray-900">{s.student_full_name}</td>
-                    <td className="px-6 py-4">{s.grade_level}</td>
-                    <td className="px-6 py-4">{s.class_name || '—'}</td>
-                    {listType === 'low' && <td className="px-6 py-4 text-xs text-gray-500">{s.notes}</td>}
-                    {listType === 'inclusion' && <td className="px-6 py-4"><span className="badge-info">{s.disability_type}</span></td>}
-                    {listType === 'expatriate' && <td className="px-6 py-4">{s.country}</td>}
-                    {listType === 'refugee' && <td className="px-6 py-4">{s.refugee_classification}</td>}
-                    <td className="px-6 py-4 text-center">
-                      <button onClick={() => handleDelete(s.id)} className="text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors">🗑️</button>
+                {filteredStudents.map((s, idx) => (
+                  <tr key={s.id} className="hover:bg-gray-50/50 transition-colors group">
+                    <td className="px-5 py-3 text-xs text-gray-400 font-mono">{idx + 1}</td>
+                    <td className="px-5 py-3 font-bold text-gray-900">{s.student_full_name}</td>
+                    <td className="px-5 py-3 text-gray-600">{s.grade_level}</td>
+                    <td className="px-5 py-3 text-gray-500">{s.class_name || '—'}</td>
+                    {listType === 'low' && <td className="px-5 py-3 text-xs text-gray-500 max-w-[200px] truncate">{s.notes || '—'}</td>}
+                    {listType === 'inclusion' && (
+                      <td className="px-5 py-3">
+                        <span className="badge-info">{s.disability_type || '—'}</span>
+                      </td>
+                    )}
+                    {listType === 'expatriate' && <td className="px-5 py-3 text-gray-600">{s.country || '—'}</td>}
+                    {listType === 'refugee' && (
+                      <td className="px-5 py-3">
+                        <span className="badge-neutral">{s.refugee_classification || '—'}</span>
+                      </td>
+                    )}
+                    <td className="px-5 py-3 text-center">
+                      <button onClick={() => setConfirmDelete(s.id)}
+                        className="text-red-400 hover:text-red-600 hover:bg-red-50 p-2 rounded-lg transition-all opacity-0 group-hover:opacity-100">
+                        🗑️
+                      </button>
                     </td>
                   </tr>
                 ))}
-                {students.length === 0 && (
-                  <tr>
-                    <td colSpan={10} className="py-20 text-center text-gray-400 font-bold">لا يوجد طلاب مسجلين في هذه القائمة.</td>
-                  </tr>
-                )}
               </tbody>
             </table>
+          </div>
+        ) : (
+          <div className="text-center py-16">
+            <span className="text-5xl block mb-4">{activeListInfo.icon}</span>
+            <p className="text-gray-400 font-bold text-sm">
+              {searchQuery ? 'لا توجد نتائج مطابقة' : `لا يوجد طلاب في قائمة ${activeListInfo.label}`}
+            </p>
+            {!showForm && !searchQuery && (
+              <button type="button" onClick={() => setShowForm(true)} className={`text-${activeListInfo.color}-600 text-sm font-bold mt-3 hover:underline`}>
+                + إضافة أول طالب
+              </button>
+            )}
           </div>
         )}
       </div>

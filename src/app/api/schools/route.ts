@@ -37,7 +37,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
 
   try {
-    const school = await createSchool(parsed.data);
+    const d = parsed.data;
+    const school = await createSchool({
+      school_code: d.code,
+      school_name_ar: d.name,
+      school_type: d.type,
+      educational_stage: d.stage,
+      administration_id: d.district ?? '',
+      address: d.address,
+    });
     return NextResponse.json({ success: true, school });
   } catch (e) {
     return NextResponse.json({ error: (e as Error).message }, { status: 400 });

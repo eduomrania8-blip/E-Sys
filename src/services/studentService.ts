@@ -99,7 +99,7 @@ export async function getStudentsPaginated(params: {
       school_type: school?.type ?? '',
       district: school?.district ?? '',
     };
-  }) as (Student & { school_name: string; school_type: string; district: string })[];
+  }) as unknown as (Student & { school_name: string; school_type: string; district: string })[];
 
   return {
     items,
