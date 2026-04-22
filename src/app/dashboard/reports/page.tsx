@@ -325,16 +325,16 @@ function LowPerformersReport({ data, onRefresh }: { data: any[]; onRefresh: () =
     const exportData = filteredData.map((s, i) => ({
       'م': i + 1,
       'اسم التلميذ': s.student_full_name,
-      'المدرسة': s.schools?.school_name_ar || '—',
-      'نوعية المدرسة': s.schools?.school_type || '—',
       'الصف': s.grade_level,
       'الفصل': s.class_name || '—',
+      'المدرسة': s.schools?.school_name_ar || '—',
+      'نوعية المدرسة': s.schools?.school_type || '—',
       'ملاحظات / الضعف': s.notes || '—',
     }));
 
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.json_to_sheet(exportData);
-    ws['!cols'] = [{ wch: 5 }, { wch: 40 }, { wch: 35 }, { wch: 15 }, { wch: 15 }, { wch: 10 }, { wch: 30 }];
+    ws['!cols'] = [{ wch: 5 }, { wch: 40 }, { wch: 15 }, { wch: 10 }, { wch: 35 }, { wch: 15 }, { wch: 30 }];
     
     XLSX.utils.book_append_sheet(wb, ws, 'كشف الضعاف');
     XLSX.writeFile(wb, `كشف_الطلاب_الضعاف_${new Date().getTime()}.xlsx`);
@@ -403,10 +403,10 @@ function LowPerformersReport({ data, onRefresh }: { data: any[]; onRefresh: () =
               <tr className="bg-gray-100 font-black text-gray-600">
                 <th className="p-2 border">#</th>
                 <th className="p-2 border">الاسم</th>
-                <th className="p-2 border">المدرسة</th>
-                <th className="p-2 border">النوعية</th>
                 <th className="p-2 border">الصف</th>
                 <th className="p-2 border">الفصل</th>
+                <th className="p-2 border">المدرسة</th>
+                <th className="p-2 border">النوعية</th>
                 <th className="p-2 border">ملاحظات</th>
                 <th className="p-2 border w-16 no-print text-center">إجراء</th>
               </tr>
@@ -416,10 +416,10 @@ function LowPerformersReport({ data, onRefresh }: { data: any[]; onRefresh: () =
                 <tr key={s.id} className="border-b hover:bg-gray-50 transition-colors">
                   <td className="p-1.5 border text-center text-gray-500">{i + 1}</td>
                   <td className="p-1.5 border font-bold text-gray-900">{s.student_full_name}</td>
-                  <td className="p-1.5 border">{s.schools?.school_name_ar || '—'}</td>
-                  <td className="p-1.5 border text-center">{s.schools?.school_type || '—'}</td>
                   <td className="p-1.5 border text-center">{s.grade_level}</td>
                   <td className="p-1.5 border text-center">{s.class_name || '—'}</td>
+                  <td className="p-1.5 border">{s.schools?.school_name_ar || '—'}</td>
+                  <td className="p-1.5 border text-center">{s.schools?.school_type || '—'}</td>
                   <td className="p-1.5 border">{s.notes || '—'}</td>
                   <td className="p-1.5 border text-center no-print">
                     <button 
