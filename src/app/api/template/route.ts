@@ -200,7 +200,7 @@ export async function GET(req: NextRequest) {
     return new NextResponse(buf, {
       headers: {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'Content-Disposition': `attachment; filename="${encodeURIComponent(filename)}"`,
+        'Content-Disposition': `attachment; filename="template.xlsx"; filename*=UTF-8''${encodeURIComponent(filename)}`,
         'Content-Length': buf.length.toString(),
       },
     });

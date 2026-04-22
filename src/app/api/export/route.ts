@@ -65,7 +65,7 @@ export async function GET(req: NextRequest) {
     return new NextResponse(new Uint8Array(buf), {
       headers: {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'Content-Disposition': 'attachment; filename="كشف_كل_المدارس.xlsx"',
+        'Content-Disposition': `attachment; filename="export.xlsx"; filename*=UTF-8''${encodeURIComponent('كشف_كل_المدارس.xlsx')}`,
       },
     });
   } catch (e) {
