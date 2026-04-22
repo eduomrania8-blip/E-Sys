@@ -335,7 +335,7 @@ export type SessionUser = {
   schoolId?: string;
   schoolCode?: string;
   schoolName?: string;
-  schoolType?: SchoolType;
+  schoolType?: string;
 };
 
 // Legacy compat
