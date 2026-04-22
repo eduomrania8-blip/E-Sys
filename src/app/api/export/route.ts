@@ -1,4 +1,4 @@
-// src/app/api/export/route.ts
+export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/session';
 import { getAllStudentsForExport, getSchoolUpload } from '@/services/studentService';

@@ -2,6 +2,7 @@
 // API لتوليد ملف Excel Template متعدد الأوراق
 // يحتوي على قائمة المدارس من قاعدة البيانات + نماذج كل الأوراق
 
+export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import * as XLSX from 'xlsx';
