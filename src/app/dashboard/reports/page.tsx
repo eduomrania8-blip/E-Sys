@@ -53,7 +53,7 @@ export default function ReportsPage() {
         }
         case 'low': {
           const { data } = await supabase.from('low_performer_students')
-            .select('*, schools(school_name_ar, school_code)')
+            .select('*, schools(school_name_ar, school_code, school_type)')
             .eq('academic_year', '2025-2026').order('school_id');
           setData(data ?? []);
           break;
@@ -138,7 +138,7 @@ export default function ReportsPage() {
         <ReportStudentList title="كشف طلاب الدمج" data={data} cols={['الاسم', 'الصف', 'الفصل', 'نوع الإعاقة', 'المدرسة']} fields={['student_full_name', 'grade_level', 'class_name', 'disability_type']} />
       )}
       {selectedReport === 'low' && data && (
-        <ReportStudentList title="كشف الطلاب الضعاف" data={data} cols={['الاسم', 'الصف', 'الفصل', 'ملاحظات', 'المدرسة']} fields={['student_full_name', 'grade_level', 'class_name', 'notes']} />
+        <LowPerformersReport data={data} onRefresh={() => generate('low')} />
       )}
       {selectedReport === 'expat' && data && (
         <ReportExpat data={data} />
@@ -260,6 +260,190 @@ function ReportStaff({ data }: { data: any[] }) {
         })}</tbody>
         <tfoot><tr className="bg-gray-100 font-black"><td className="p-2 border"></td><td className="p-2 border" colSpan={2}>الإجمالي</td><td className="p-2 border text-center">{totals.teachers}</td><td className="p-2 border text-center">{totals.admins}</td><td className="p-2 border text-center">{totals.workers}</td><td className="p-2 border text-center">{totals.teachers + totals.admins + totals.workers}</td><td className="p-2 border" colSpan={2}></td></tr></tfoot>
       </table>
+    </div>
+  );
+}
+
+function LowPerformersReport({ data, onRefresh }: { data: any[]; onRefresh: () => void }) {
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
+  const [selectedSchool, setSelectedSchool] = useState<string>('');
+  const [selectedType, setSelectedType] = useState<string>('');
+  const [selectedGrade, setSelectedGrade] = useState<string>('');
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // استخراج القوائم الفريدة للفلاتر
+  const uniqueSchools = Array.from(new Set(data.map(d => d.schools?.school_name_ar).filter(Boolean))) as string[];
+  const uniqueTypes = Array.from(new Set(data.map(d => d.schools?.school_type).filter(Boolean))) as string[];
+  const uniqueGrades = Array.from(new Set(data.map(d => d.grade_level).filter(Boolean))) as string[];
+
+  // الفرز
+  const filteredData = data.filter(s => {
+    const matchSchool = selectedSchool ? s.schools?.school_name_ar === selectedSchool : true;
+    const matchType = selectedType ? s.schools?.school_type === selectedType : true;
+    const matchGrade = selectedGrade ? s.grade_level === selectedGrade : true;
+    return matchSchool && matchType && matchGrade;
+  });
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('هل أنت متأكد من حذف هذا الطالب من كشف الضعاف؟')) return;
+    setIsDeleting(true);
+    try {
+      const { error } = await supabase.from('low_performer_students').delete().eq('id', id);
+      if (error) throw error;
+      onRefresh();
+    } catch (err: any) {
+      alert('خطأ في الحذف: ' + err.message);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleDeleteAllForSchool = async () => {
+    if (!selectedSchool) return;
+    const schoolId = data.find(s => s.schools?.school_name_ar === selectedSchool)?.school_id;
+    if (!schoolId) return;
+    
+    if (!confirm(`تحذير خطير: سيتم حذف جميع الطلاب الضعاف المسجلين لمدرسة (${selectedSchool}) بالكامل! هل توافق؟`)) return;
+    setIsDeleting(true);
+    try {
+      const { error } = await supabase.from('low_performer_students').delete().eq('school_id', schoolId).eq('academic_year', '2025-2026');
+      if (error) throw error;
+      onRefresh();
+    } catch (err: any) {
+      alert('خطأ في الحذف: ' + err.message);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const exportToExcel = async () => {
+    const XLSX = await import('xlsx');
+    const exportData = filteredData.map((s, i) => ({
+      'م': i + 1,
+      'اسم التلميذ': s.student_full_name,
+      'المدرسة': s.schools?.school_name_ar || '—',
+      'نوعية المدرسة': s.schools?.school_type || '—',
+      'الصف': s.grade_level,
+      'الفصل': s.class_name || '—',
+      'ملاحظات / الضعف': s.notes || '—',
+    }));
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    ws['!cols'] = [{ wch: 5 }, { wch: 40 }, { wch: 35 }, { wch: 15 }, { wch: 15 }, { wch: 10 }, { wch: 30 }];
+    
+    XLSX.utils.book_append_sheet(wb, ws, 'كشف الضعاف');
+    XLSX.writeFile(wb, `كشف_الطلاب_الضعاف_${new Date().getTime()}.xlsx`);
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* قسم الفلاتر */}
+      <div className="card p-6 bg-white no-print">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-black text-gray-900">أدوات الفرز المتقدمة</h3>
+          <button onClick={exportToExcel} className="btn-success text-sm py-1.5 px-3 flex items-center gap-2">
+            📊 تصدير Excel
+          </button>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label className="block text-xs font-bold text-gray-500 mb-1">نوعية المدرسة</label>
+            <select className="input-field py-1.5 text-sm" value={selectedType} onChange={e => setSelectedType(e.target.value)}>
+              <option value="">الكل</option>
+              {uniqueTypes.map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-gray-500 mb-1">المدرسة</label>
+            <select className="input-field py-1.5 text-sm" value={selectedSchool} onChange={e => setSelectedSchool(e.target.value)}>
+              <option value="">الكل</option>
+              {uniqueSchools.map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-gray-500 mb-1">الصف الدراسي</label>
+            <select className="input-field py-1.5 text-sm" value={selectedGrade} onChange={e => setSelectedGrade(e.target.value)}>
+              <option value="">الكل</option>
+              {uniqueGrades.map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
+          </div>
+        </div>
+        
+        {/* أزرار الحذف */}
+        {selectedSchool && (
+          <div className="mt-4 pt-4 border-t border-red-100 flex justify-end">
+            <button 
+              onClick={handleDeleteAllForSchool} 
+              disabled={isDeleting}
+              className="bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 px-4 py-2 rounded-xl text-sm font-bold transition-colors"
+            >
+              {isDeleting ? 'جاري الحذف...' : `🗑️ حذف جميع ضعاف مدرسة (${selectedSchool})`}
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* الجدول */}
+      <div className="card p-6">
+        <div className="flex justify-between items-end mb-4">
+          <div>
+            <h2 className="text-xl font-black text-gray-900">كشف الطلاب الضعاف</h2>
+            <p className="text-sm text-gray-500 mt-1">إجمالي المعروض: <span className="font-black text-blue-600 text-lg">{filteredData.length}</span> طالب</p>
+          </div>
+        </div>
+        
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs text-right border-collapse">
+            <thead>
+              <tr className="bg-gray-100 font-black text-gray-600">
+                <th className="p-2 border">#</th>
+                <th className="p-2 border">الاسم</th>
+                <th className="p-2 border">المدرسة</th>
+                <th className="p-2 border">النوعية</th>
+                <th className="p-2 border">الصف</th>
+                <th className="p-2 border">الفصل</th>
+                <th className="p-2 border">ملاحظات</th>
+                <th className="p-2 border w-16 no-print text-center">إجراء</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredData.map((s: any, i: number) => (
+                <tr key={s.id} className="border-b hover:bg-gray-50 transition-colors">
+                  <td className="p-1.5 border text-center text-gray-500">{i + 1}</td>
+                  <td className="p-1.5 border font-bold text-gray-900">{s.student_full_name}</td>
+                  <td className="p-1.5 border">{s.schools?.school_name_ar || '—'}</td>
+                  <td className="p-1.5 border text-center">{s.schools?.school_type || '—'}</td>
+                  <td className="p-1.5 border text-center">{s.grade_level}</td>
+                  <td className="p-1.5 border text-center">{s.class_name || '—'}</td>
+                  <td className="p-1.5 border">{s.notes || '—'}</td>
+                  <td className="p-1.5 border text-center no-print">
+                    <button 
+                      onClick={() => handleDelete(s.id)}
+                      disabled={isDeleting}
+                      className="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-1.5 rounded-lg transition-colors"
+                      title="حذف الطالب"
+                    >
+                      🗑️
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {filteredData.length === 0 && (
+                <tr>
+                  <td colSpan={8} className="p-8 text-center text-gray-400 font-bold">
+                    لا يوجد طلاب ضعاف يطابقون خيارات الفرز المحددة
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }

@@ -128,7 +128,27 @@ export default function SettingsPage() {
           <span className="w-7 h-7 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center text-xs font-black">2</span>
           إنشاء حساب مدرسة جديد
         </h2>
-        <p className="text-xs text-gray-400 mb-4">سينشئ مستخدم في Supabase Auth ويربطه بالمدرسة المختارة</p>
+        <div className="flex justify-between items-center mb-4">
+          <p className="text-xs text-gray-400">سينشئ مستخدم في Supabase Auth ويربطه بالمدرسة المختارة</p>
+          <button
+            type="button"
+            className="btn-secondary text-xs"
+            onClick={async () => {
+              if(!confirm('هل أنت متأكد من توليد حسابات مجمعة لجميع المدارس التي لا تمتلك حساباً؟\nسيتم استخدام (الكود) كبريد إلكتروني وكلمة مرور.')) return;
+              setUserMsg('جاري التوليد... يرجى الانتظار');
+              try {
+                const res = await fetch('/api/admin/bulk-create-users', { method: 'POST' });
+                const json = await res.json();
+                setUserMsg(res.ok ? `✅ ${json.message} - تم إضافة ${json.details?.success_count} حساب` : `❌ ${json.error}`);
+                loadData();
+              } catch (err: any) {
+                setUserMsg(`❌ ${err.message}`);
+              }
+            }}
+          >
+            ⚡ توليد حسابات لجميع المدارس
+          </button>
+        </div>
 
         <form onSubmit={createSchoolUser} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
