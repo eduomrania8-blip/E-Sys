@@ -187,11 +187,17 @@ async function importMainData() {
     });
   }
 
-  // Batch Inserts
   console.log('Inserting leaders...');
-  for (let i = 0; i < leadersToInsert.length; i += 100) {
-    const batch = leadersToInsert.slice(i, i + 100);
-    await supabase.from('school_leaders').upsert(batch, { onConflict: 'national_id' });
+  const uniqueLeadersMap = new Map();
+  for (const leader of leadersToInsert) {
+    uniqueLeadersMap.set(leader.national_id, leader);
+  }
+  const uniqueLeaders = Array.from(uniqueLeadersMap.values());
+  
+  for (let i = 0; i < uniqueLeaders.length; i += 100) {
+    const batch = uniqueLeaders.slice(i, i + 100);
+    const { error } = await supabase.from('school_leaders').upsert(batch, { onConflict: 'national_id' });
+    if (error) console.error('Leaders batch error:', error);
   }
 
   console.log('Inserting class statistics...');
