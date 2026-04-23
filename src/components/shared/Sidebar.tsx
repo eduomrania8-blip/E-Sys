@@ -22,6 +22,12 @@ const navLinks = [
     description: 'قائمة مدارس الإدارة',
   },
   {
+    href: '/dashboard/leaders',
+    label: 'دليل القادة',
+    icon: '👔',
+    description: 'مديري المدارس والتواصل',
+  },
+  {
     href: '/dashboard/analytics',
     label: 'مركز التحليلات',
     icon: '📈',
@@ -60,7 +66,7 @@ export function Sidebar() {
   };
 
   return (
-    <aside className={`flex flex-col transition-all duration-300 ${collapsed ? 'w-[72px]' : 'w-72'} min-h-screen shrink-0`}>
+    <aside className={`flex flex-col transition-all duration-300 ${collapsed ? 'w-[72px]' : 'w-72'} h-screen sticky top-0 shrink-0`}>
       {/* Background gradient */}
       <div className="flex flex-col flex-1 bg-gradient-to-b from-blue-900 via-blue-800 to-indigo-950 text-white shadow-xl z-20">
 

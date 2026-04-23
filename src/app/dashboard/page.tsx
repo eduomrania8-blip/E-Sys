@@ -83,12 +83,12 @@ export default async function DashboardPage() {
             <div className="flex flex-wrap gap-2 mt-2">
               {dangerSchools > 0 && (
                 <span className="px-3 py-1 bg-red-600 text-white rounded-lg text-xs font-black shadow-sm">
-                  🔴 {dangerSchools} مدرسة في حالة خطر (&gt; 60 طالب/فصل)
+                  🔴 {dangerSchools} مدرسة في حالة خطر (&gt; 50 طالب/فصل)
                 </span>
               )}
               {warningSchools > 0 && (
                 <span className="px-3 py-1 bg-orange-500 text-white rounded-lg text-xs font-black shadow-sm">
-                  🟡 {warningSchools} مدرسة مرتفعة الكثافة (50-60 طالب/فصل)
+                  🟡 {warningSchools} مدرسة مرتفعة الكثافة (40-50 طالب/فصل)
                 </span>
               )}
             </div>

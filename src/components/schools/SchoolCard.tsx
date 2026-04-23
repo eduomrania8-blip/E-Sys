@@ -24,9 +24,9 @@ export const SchoolCard: React.FC<SchoolCardProps> = ({
   const density = avgDensity || (classroomCount > 0 ? totalStudents / classroomCount : 0);
   
   const getDensityStatus = () => {
-    if (density > 60) return { label: 'خطر', color: 'border-red-600 bg-red-50', badge: 'bg-red-600 text-white' };
-    if (density > 50) return { label: 'مرتفع', color: 'border-red-500 bg-red-50', badge: 'bg-red-500 text-white' };
-    if (density > 40) return { label: 'متوسط', color: 'border-yellow-500 bg-yellow-50', badge: 'bg-yellow-500 text-gray-800' };
+    if (density > 50) return { label: 'خطر', color: 'border-red-600 bg-red-50', badge: 'bg-red-600 text-white' };
+    if (density > 40) return { label: 'مرتفع', color: 'border-red-500 bg-red-50', badge: 'bg-red-500 text-white' };
+    if (density > 30) return { label: 'متوسط', color: 'border-yellow-500 bg-yellow-50', badge: 'bg-yellow-500 text-gray-800' };
     return { label: 'آمن', color: 'border-green-500 bg-green-50', badge: 'bg-green-500 text-white' };
   };
 
@@ -53,13 +53,13 @@ export const SchoolCard: React.FC<SchoolCardProps> = ({
           </div>
           <div className="bg-white/50 p-3 rounded-lg border border-gray-100">
             <p className="text-xs text-gray-500 mb-1">الكثافة</p>
-            <p className={`text-2xl font-black ${density > 50 ? 'text-red-600' : 'text-gray-800'}`}>
+            <p className={`text-2xl font-black ${density > 40 ? 'text-red-600' : 'text-gray-800'}`}>
               {density.toFixed(1)}
             </p>
           </div>
         </div>
 
-        {density > 50 && (
+        {density > 40 && (
           <div className="mt-4 flex items-center gap-2 bg-red-600 text-white p-3 rounded-lg animate-pulse">
             <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />

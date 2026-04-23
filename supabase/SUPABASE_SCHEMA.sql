@@ -53,7 +53,7 @@ CREATE TABLE schools (
     school_code       VARCHAR(20) UNIQUE NOT NULL,
     school_name_ar    VARCHAR(150) NOT NULL,
     school_type       VARCHAR(30) CHECK (school_type IN (
-                          'رسمية','رسمية لغات','خاصة','خاصة لغات','دولية','فنية'
+                          'رسمية','رسمية لغات','خاصة','خاصة لغات','دولية','فنية','ثقافية'
                       )),
     educational_stage VARCHAR(30) CHECK (educational_stage IN (
                           'ابتدائي','اعدادي','ثانوي','تعليم اساسي','تعليم مجتمعي'
@@ -442,8 +442,40 @@ CREATE POLICY "سجل — الأدمن فقط"         ON audit_log FOR SELECT U
 -- 14. المشاهدات التحليلية
 -- =============================================================================
 
--- مشاهدة: ملخص كل مدرسة
+-- مشاهدة: ملخص كل مدرسة (نسخة ديناميكية تعتمد على الإعدادات)
 CREATE OR REPLACE VIEW school_summary AS
+WITH current_academic_year AS (
+    SELECT value FROM admin_settings WHERE key = 'academic_year' LIMIT 1
+),
+stats_sum AS (
+    SELECT school_id, 
+           SUM(total_students) AS total_students,
+           SUM(number_of_classes) AS total_classes,
+           SUM(inclusion_total) AS total_inclusion,
+           SUM(expatriate_count) AS total_expatriate,
+           SUM(retained_for_repeat) AS total_retained,
+           SUM(dropout_count) AS total_dropouts,
+           SUM(boys_count) AS total_boys,
+           SUM(girls_count) AS total_girls,
+           ROUND(AVG(density_per_class), 1) AS avg_density
+    FROM class_statistics 
+    WHERE academic_year = (SELECT value FROM current_academic_year)
+    GROUP BY school_id
+),
+lp_count AS (
+    SELECT school_id, COUNT(*) AS low_performer_count
+    FROM low_performer_students
+    WHERE academic_year = (SELECT value FROM current_academic_year)
+    GROUP BY school_id
+),
+staff_counts AS (
+    SELECT school_id,
+           COUNT(*) FILTER (WHERE job_category = 'معلم') AS teacher_count,
+           COUNT(*) FILTER (WHERE job_category = 'إداري') AS admin_count,
+           COUNT(*) FILTER (WHERE job_category = 'عامل') AS worker_count
+    FROM school_staff
+    GROUP BY school_id
+)
 SELECT
     s.id AS school_id,
     s.school_code,
@@ -456,29 +488,25 @@ SELECT
     sb.actual_classrooms,
     sb.building_status,
     sb.has_internet,
-    COALESCE(SUM(cs.total_students),     0) AS total_students,
-    COALESCE(SUM(cs.number_of_classes),  0) AS total_classes,
-    COALESCE(SUM(cs.inclusion_total),    0) AS total_inclusion,
-    COALESCE(SUM(cs.expatriate_count),   0) AS total_expatriate,
-    COALESCE(SUM(cs.retained_for_repeat),0) AS total_retained,
-    COALESCE(SUM(cs.dropout_count),      0) AS total_dropouts,
-    COALESCE(SUM(cs.boys_count),         0) AS total_boys,
-    COALESCE(SUM(cs.girls_count),        0) AS total_girls,
-    ROUND(AVG(cs.density_per_class), 1)     AS avg_density,
-    COUNT(DISTINCT lp.id)                   AS low_performer_count,
-    COUNT(DISTINCT sl.id) FILTER (WHERE sl.job_category = 'معلم')  AS teacher_count,
-    COUNT(DISTINCT sa.id) FILTER (WHERE sa.job_category = 'إداري') AS admin_count,
-    COUNT(DISTINCT sw.id) FILTER (WHERE sw.job_category = 'عامل')  AS worker_count
+    COALESCE(cs.total_students, 0) AS total_students,
+    COALESCE(cs.total_classes, 0) AS total_classes,
+    COALESCE(cs.total_inclusion, 0) AS total_inclusion,
+    COALESCE(cs.total_expatriate, 0) AS total_expatriate,
+    COALESCE(cs.total_retained, 0) AS total_retained,
+    COALESCE(cs.total_dropouts, 0) AS total_dropouts,
+    COALESCE(cs.total_boys, 0) AS total_boys,
+    COALESCE(cs.total_girls, 0) AS total_girls,
+    COALESCE(cs.avg_density, 0) AS avg_density,
+    COALESCE(lp.low_performer_count, 0) AS low_performer_count,
+    COALESCE(st.teacher_count, 0) AS teacher_count,
+    COALESCE(st.admin_count, 0) AS admin_count,
+    COALESCE(st.worker_count, 0) AS worker_count
 FROM schools s
 LEFT JOIN educational_administrations ea ON s.administration_id = ea.id
 LEFT JOIN school_buildings sb            ON s.id = sb.school_id
-LEFT JOIN class_statistics cs            ON s.id = cs.school_id AND cs.academic_year = '2025-2026'
-LEFT JOIN low_performer_students lp      ON s.id = lp.school_id AND lp.academic_year = '2025-2026'
-LEFT JOIN school_staff sl                ON s.id = sl.school_id
-LEFT JOIN school_staff sa                ON s.id = sa.school_id
-LEFT JOIN school_staff sw                ON s.id = sw.school_id
-GROUP BY s.id, ea.name_ar, ea.governorate,
-         sb.actual_classrooms, sb.building_status, sb.has_internet;
+LEFT JOIN stats_sum cs                   ON s.id = cs.school_id
+LEFT JOIN lp_count lp                    ON s.id = lp.school_id
+LEFT JOIN staff_counts st                ON s.id = st.school_id;
 
 -- مشاهدة: مدارس الكثافة المرتفعة
 CREATE OR REPLACE VIEW high_density_schools AS
@@ -494,15 +522,15 @@ SELECT
     cs.number_of_classes,
     cs.density_per_class,
     CASE
-        WHEN cs.density_per_class > 60 THEN 'خطر'
-        WHEN cs.density_per_class > 50 THEN 'مرتفع'
-        WHEN cs.density_per_class > 40 THEN 'متوسط'
+        WHEN cs.density_per_class > 50 THEN 'خطر'
+        WHEN cs.density_per_class > 40 THEN 'مرتفع'
+        WHEN cs.density_per_class > 30 THEN 'متوسط'
         ELSE 'مقبول'
     END AS density_status
 FROM class_statistics cs
 JOIN schools s ON cs.school_id = s.id
 LEFT JOIN educational_administrations ea ON s.administration_id = ea.id
-WHERE cs.academic_year = '2025-2026'
+WHERE cs.academic_year = (SELECT value FROM admin_settings WHERE key = 'academic_year' LIMIT 1)
   AND cs.number_of_classes > 0
 ORDER BY cs.density_per_class DESC;
 
@@ -520,7 +548,7 @@ SELECT
     COALESCE(SUM(ss.total_inclusion), 0)     AS total_inclusion,
     COALESCE(SUM(ss.total_expatriate),0)     AS total_expatriate,
     ROUND(AVG(ss.avg_density), 1)            AS avg_density,
-    COUNT(s.id) FILTER (WHERE ss.avg_density > 50) AS high_density_schools_count
+    COUNT(s.id) FILTER (WHERE ss.avg_density > 40) AS high_density_schools_count
 FROM educational_administrations ea
 LEFT JOIN schools s ON ea.id = s.administration_id AND s.is_active = true
 LEFT JOIN school_summary ss ON s.id = ss.school_id
@@ -578,8 +606,8 @@ ON CONFLICT (code) DO NOTHING;
 -- إعدادات النظام
 INSERT INTO admin_settings (key, value) VALUES
   ('academic_year', '2025-2026'),
-  ('density_warning_threshold', '50'),
-  ('density_danger_threshold', '60'),
+  ('density_warning_threshold', '40'),
+  ('density_danger_threshold', '50'),
   ('system_name', 'منظومة التعليم الابتدائى')
 ON CONFLICT (key) DO NOTHING;
 
