@@ -82,9 +82,7 @@ export default function LeadersForm({ schoolId }: { schoolId: string }) {
     const payload = { 
       school_id: schoolId, 
       ...form, 
-      national_id: validNid,
-      qualification: sanitizeQualification(form.qualification),
-      subject_taught: sanitizeSubject(form.subject_taught)
+      national_id: validNid
     };
 
     let error;
