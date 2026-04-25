@@ -4,6 +4,7 @@
 
 import React from 'react';
 import { ReportHeader, ReportFooter, PrintButton } from './PrintableReport';
+import DownloadPdfButton from './DownloadPdfButton';
 
 interface Props {
   staff: any[];
@@ -37,7 +38,10 @@ export function FullStaffReport({ staff, leaders, school, mode }: Props) {
           <h3 className="font-black text-slate-800 text-base">{title}</h3>
           <p className="text-xs text-slate-500">إجمالي: {filteredStaff.length} سجل</p>
         </div>
-        <PrintButton label="🖨️ طباعة الكشف" reportId={reportId} />
+        <div className="flex items-center gap-2">
+          <DownloadPdfButton title={title} targetId={reportId} />
+          <PrintButton label="🖨️ طباعة الكشف" reportId={reportId} />
+        </div>
       </div>
 
       {/* Printable Content */}
