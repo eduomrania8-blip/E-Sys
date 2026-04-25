@@ -37,9 +37,8 @@ interface ReportFooterProps {
 }
 
 export function ReportFooter({ signers = [
-  { label: 'مدير المدرسة' },
   { label: 'شئون العاملين' },
-  { label: 'مدير الإدارة' },
+  { label: 'مدير المدرسة' },
 ] }: ReportFooterProps) {
   return (
     <div className="mt-10 pt-5 border-t-2 border-gray-300 flex w-full justify-around print-footer">

@@ -5,6 +5,7 @@
 import React from 'react';
 import { ReportHeader, ReportFooter, PrintButton } from './PrintableReport';
 import DownloadPdfButton from './DownloadPdfButton';
+import ExportExcelButton from '@/components/shared/ExportExcelButton';
 
 interface Props {
   staff: any[];
@@ -39,8 +40,9 @@ export function FullStaffReport({ staff, leaders, school, mode }: Props) {
           <p className="text-xs text-slate-500">إجمالي: {filteredStaff.length} سجل</p>
         </div>
         <div className="flex items-center gap-2">
+          <ExportExcelButton tableId={`${reportId}-table`} fileName={title.replace('📋 ', '').replace(/ /g, '_')} sheetName="بيانات العاملين" buttonText="إكسيل" />
           <DownloadPdfButton title={title} targetId={reportId} />
-          <PrintButton label="🖨️ طباعة الكشف" reportId={reportId} />
+          <PrintButton label="🖨️ طباعة" reportId={reportId} />
         </div>
       </div>
 
@@ -74,7 +76,7 @@ export function FullStaffReport({ staff, leaders, school, mode }: Props) {
         )}
 
         <div className="overflow-x-auto">
-          <table className="w-full text-xs border-collapse border border-gray-400 text-right">
+          <table id={`${reportId}-table`} className="w-full text-xs border-collapse border border-gray-400 text-right">
             <thead>
               <tr className="bg-gray-200">
                 <th className="p-1.5 border border-gray-400 text-center w-7">#</th>

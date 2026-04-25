@@ -4,6 +4,7 @@
 
 import React, { useMemo } from 'react';
 import { ReportHeader, ReportFooter, PrintButton } from './PrintableReport';
+import ExportExcelButton from '@/components/shared/ExportExcelButton';
 import { CADRE_QUOTAS } from '@/utils/hrCalculator';
 
 interface ClassStat {
@@ -180,10 +181,11 @@ export function OfficialShortageReport({ classStats, staff, school, stage = 'pri
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded-lg">
+          <span className="text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded-lg hidden md:inline">
             ⚠ إذا كان التخصص موجود والكادر غير محدد = 24 حصة
           </span>
-          <PrintButton label="🖨️ طباعة كشف العجز والزيادة" reportId={reportId} />
+          <ExportExcelButton tableId={`${reportId}-table`} fileName={`كشف_العجز_والزيادة_${stage}`} sheetName="الكشف الرسمي" buttonText="إكسيل" />
+          <PrintButton label="🖨️ طباعة" reportId={reportId} />
         </div>
       </div>
 
@@ -198,7 +200,7 @@ export function OfficialShortageReport({ classStats, staff, school, stage = 'pri
         />
 
         <div className="overflow-x-auto">
-          <table className="shortage-table w-full text-[10px] border-collapse border border-gray-500 text-center">
+          <table id={`${reportId}-table`} className="shortage-table w-full text-[10px] border-collapse border border-gray-500 text-center">
             {/* ═══ الرأس ═══ */}
             <thead>
               {/* صف الأنصبة القانونية */}
@@ -343,19 +345,7 @@ export function OfficialShortageReport({ classStats, staff, school, stage = 'pri
           </table>
         </div>
 
-        {/* توقيعات */}
-        <div className="mt-6 flex justify-between text-xs text-gray-600">
-          <span>شئون العاملين</span>
-          <span>وكيل المدرسة</span>
-          <span>يعتمد .. مدير المدرسة</span>
-        </div>
-
-        <ReportFooter signers={[
-          { label: 'مدير المدرسة' },
-          { label: 'وكيل المدرسة' },
-          { label: 'شئون العاملين' },
-          { label: 'مدير الإدارة' },
-        ]} />
+        <ReportFooter />
       </div>
     </div>
   );

@@ -170,11 +170,7 @@ export function WorkforceStructure({ staff, leaders, school }: Props) {
         </div>
       </div>
 
-      <ReportFooter signers={[
-        { label: 'مدير المدرسة' },
-        { label: 'شئون العاملين' },
-        { label: 'مدير الإدارة' },
-      ]} />
+      <ReportFooter />
       </div>{/* end printable div */}
     </div>
   );

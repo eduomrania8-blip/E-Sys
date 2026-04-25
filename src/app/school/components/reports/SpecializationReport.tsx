@@ -4,6 +4,7 @@
 
 import React, { useMemo } from 'react';
 import { ReportHeader, ReportFooter, PrintButton } from './PrintableReport';
+import ExportExcelButton from '@/components/shared/ExportExcelButton';
 
 type FilterType = 'appointed' | 'hourly' | 'pension' | 'all';
 
@@ -72,7 +73,10 @@ export function SpecializationReport({ staff, school, filterType }: Props) {
           <h3 className="font-black text-slate-800 text-base">{config.title}</h3>
           <p className="text-xs text-slate-500">{config.subtitle} — إجمالي: {totalTeachers} معلم في {grouped.length} تخصص</p>
         </div>
-        <PrintButton label="🖨️ طباعة الكشف" reportId={reportId} />
+        <div className="flex items-center gap-2">
+          <ExportExcelButton tableId={`${reportId}-table`} fileName={config.title.replace(/ /g, '_')} sheetName="التخصصات" buttonText="إكسيل" />
+          <PrintButton label="🖨️ طباعة" reportId={reportId} />
+        </div>
       </div>
 
       {totalTeachers === 0 ? (
@@ -109,7 +113,7 @@ export function SpecializationReport({ staff, school, filterType }: Props) {
             ))}
           </div>
 
-          <table className="w-full text-xs border-collapse border border-gray-400 text-right">
+          <table id={`${reportId}-table`} className="w-full text-xs border-collapse border border-gray-400 text-right">
             <thead>
               <tr className="bg-gray-200">
                 <th className="p-1.5 border border-gray-400 text-center w-7">#</th>
