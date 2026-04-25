@@ -245,81 +245,82 @@ export default function LeadersForm({ schoolId }: { schoolId: string }) {
 
       {/* Form */}
       {showForm && (
-        <form onSubmit={handleSubmit} className="p-5 bg-purple-50/50 border-2 border-purple-200 rounded-2xl animate-slide-down space-y-4">
-          <h3 className="font-black text-purple-900 text-sm flex items-center gap-2">
-            {editId ? '✏️ تعديل بيانات القائد' : '✨ إضافة قائد جديد'}
-          </h3>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div>
-              <label className="block text-[11px] font-bold text-gray-500 mb-1">الاسم بالكامل *</label>
-              <input required type="text" value={form.full_name_ar}
-                onChange={e => setForm({ ...form, full_name_ar: e.target.value })}
-                className="input-field w-full" placeholder="الاسم الرباعي" />
-            </div>
-            <div>
-              <label className="block text-[11px] font-bold text-gray-500 mb-1">الرقم القومي</label>
-              <input type="text" value={form.national_id}
-                onChange={e => setForm({ ...form, national_id: e.target.value.replace(/\D/g, '').slice(0, 14) })}
-                className="input-field w-full font-mono" maxLength={14} placeholder="14 رقم" dir="ltr" />
-              {form.national_id.length > 0 && form.national_id.length < 14 && (
-                <p className="text-[10px] text-amber-500 mt-1 font-bold">⚠️ يجب أن يكون 14 رقم ({14 - form.national_id.length} متبقي)</p>
-              )}
-            </div>
-            <div>
-              <label className="block text-[11px] font-bold text-gray-500 mb-1">المسمى الوظيفي</label>
-              <div className="grid grid-cols-2 gap-1.5 max-h-[200px] overflow-y-auto">
-                {JOB_TITLES.map(job => (
-                  <button key={job.value} type="button" onClick={() => setForm({ ...form, job_title: job.value })}
-                    className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-all text-right
-                      ${form.job_title === job.value ? `bg-${job.color}-100 text-${job.color}-700 ring-1 ring-${job.color}-300` : 'bg-white text-gray-500 hover:bg-gray-50 border border-gray-100'}`}>
-                    <span>{job.icon}</span> {job.value}
-                  </button>
-                ))}
-              </div>
-            </div>
+        <form onSubmit={handleSubmit} className="bg-white border border-slate-200 shadow-xl rounded-2xl animate-slide-down overflow-hidden">
+          {/* Header */}
+          <div className="bg-slate-50 border-b border-slate-100 p-5">
+            <h3 className="font-black text-slate-800 text-lg flex items-center gap-2">
+              {editId ? '✏️ تعديل بيانات القائد' : '✨ إضافة قائد جديد'}
+            </h3>
+            <p className="text-xs text-slate-500 mt-1">يرجى إدخال البيانات بدقة لضمان صحة التقارير.</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div>
-              <label className="block text-[11px] font-bold text-gray-500 mb-1">نوع التعيين</label>
-              <div className="flex gap-2">
-                {['رسمية', 'رسمية لغات', 'فنية'].includes(schoolType) ? (
-                  <button type="button" onClick={() => setForm({ ...form, appointment_type: 'تعيين' })}
-                    className="flex-1 py-2 rounded-lg text-xs font-bold transition-all bg-blue-600 text-white shadow-md">
-                    تعيين أساسي
-                  </button>
-                ) : (
-                  ['أساسي', 'بالعقد', 'بالمكافأة'].map(opt => (
-                    <button key={opt} type="button" onClick={() => setForm({ ...form, appointment_type: opt })}
-                      className={`flex-1 py-2 rounded-lg text-[10px] font-bold transition-all
-                        ${form.appointment_type === opt ? 'bg-blue-600 text-white shadow-md' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
-                      {opt}
+          <div className="p-6 space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-600 block">الاسم بالكامل <span className="text-red-500">*</span></label>
+                <input required type="text" className={`input-field w-full ${form.full_name_ar.length > 0 && form.full_name_ar.trim().length < 3 ? 'border-red-300 bg-red-50 focus:ring-red-500' : ''}`} value={form.full_name_ar} onChange={e => setForm({...form, full_name_ar: e.target.value})} placeholder="الاسم الرباعي" />
+                {form.full_name_ar.length > 0 && form.full_name_ar.trim().length < 3 && <p className="text-[10px] text-red-600 font-bold">⚠️ يجب أن يكون 3 حروف على الأقل</p>}
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-600 block">المسمى الوظيفي</label>
+                <select className="input-field w-full font-bold text-purple-700" value={form.job_title} onChange={e => setForm({...form, job_title: e.target.value})}>
+                  {JOB_TITLES.map(job => (
+                    <option key={job.value} value={job.value}>{job.icon} {job.value}</option>
+                  ))}
+                </select>
+              </div>
+              
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-600 block">الرقم القومي</label>
+                <div className="relative">
+                  <span className="absolute right-3 top-2.5 text-slate-400">🪪</span>
+                  <input type="text" className={`input-field w-full font-mono pl-3 pr-9 ${form.national_id.length > 0 && form.national_id.length < 14 ? 'border-red-300 bg-red-50 focus:ring-red-500' : ''}`} maxLength={14} value={form.national_id} onChange={e => setForm({...form, national_id: e.target.value.replace(/\D/g, '').slice(0, 14)})} placeholder="14 رقم" dir="ltr" />
+                </div>
+                {form.national_id.length > 0 && form.national_id.length < 14 && <p className="text-[10px] text-red-600 font-bold">⚠️ يجب أن يتكون من 14 رقماً</p>}
+              </div>
+              
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-600 block">رقم الهاتف</label>
+                <div className="relative">
+                  <span className="absolute right-3 top-2.5 text-slate-400">📱</span>
+                  <input type="text" className={`input-field w-full font-mono pl-3 pr-9 ${form.phone.length > 0 && form.phone.length < 11 ? 'border-red-300 bg-red-50 focus:ring-red-500' : ''}`} maxLength={11} value={form.phone} onChange={e => setForm({...form, phone: e.target.value.replace(/\D/g, '').slice(0, 11)})} placeholder="01XXXXXXXXX" dir="ltr" />
+                </div>
+                {form.phone.length > 0 && form.phone.length < 11 && <p className="text-[10px] text-red-600 font-bold">⚠️ يجب أن يتكون من 11 رقماً</p>}
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-600 block">الكادر</label>
+                <input type="text" className="input-field w-full" value={form.cadre} onChange={e => setForm({...form, cadre: e.target.value})} placeholder="مثال: كبير معلمين" />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-600 block">نوع التعيين</label>
+                <div className="flex gap-2">
+                  {['رسمية', 'رسمية لغات', 'فنية'].includes(schoolType) ? (
+                    <button type="button" onClick={() => setForm({ ...form, appointment_type: 'تعيين' })}
+                      className="flex-1 py-2 rounded-xl text-xs font-bold transition-all bg-blue-600 text-white shadow-md">
+                      تعيين أساسي
                     </button>
-                  ))
-                )}
+                  ) : (
+                    ['أساسي', 'بالعقد', 'بالمكافأة'].map(opt => (
+                      <button key={opt} type="button" onClick={() => setForm({ ...form, appointment_type: opt })}
+                        className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all
+                          ${form.appointment_type === opt ? 'bg-blue-600 text-white shadow-md' : 'bg-slate-50 text-slate-500 hover:bg-slate-100 border border-slate-200'}`}>
+                        {opt}
+                      </button>
+                    ))
+                  )}
+                </div>
               </div>
-            </div>
-            <div>
-              <label className="block text-[11px] font-bold text-gray-500 mb-1">الكادر</label>
-              <input type="text" value={form.cadre}
-                onChange={e => setForm({ ...form, cadre: e.target.value })}
-                className="input-field w-full" placeholder="معلم خبير، كبير..." />
-            </div>
-            <div>
-              <label className="block text-[11px] font-bold text-gray-500 mb-1">رقم التليفون</label>
-              <input type="text" value={form.phone}
-                onChange={e => setForm({ ...form, phone: e.target.value.replace(/\D/g, '').slice(0, 11) })}
-                className="input-field w-full font-mono" placeholder="01XXXXXXXXX" dir="ltr" />
             </div>
           </div>
 
-          <div className="flex gap-3 pt-2">
-            <button type="submit" disabled={loading}
-              className="btn-primary flex items-center gap-2 px-8">
-              {loading ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />جاري الحفظ...</> : editId ? '💾 حفظ التعديلات' : '✅ إضافة القائد'}
+          <div className="bg-slate-50 border-t border-slate-100 p-5 flex justify-end gap-3">
+            <button type="button" onClick={() => { setShowForm(false); setEditId(null); setForm(emptyForm); }} className="px-6 py-2.5 rounded-xl text-sm font-bold text-slate-600 bg-white border border-slate-200 hover:bg-slate-100 transition-colors">إلغاء</button>
+            <button type="submit" disabled={loading} className="btn-primary px-8 py-2.5 text-sm shadow-lg shadow-blue-200">
+              {loading ? 'جاري الحفظ...' : editId ? '💾 حفظ التعديلات' : '✅ إضافة القائد'}
             </button>
-            <button type="button" onClick={() => { setShowForm(false); setEditId(null); setForm(emptyForm); }} className="btn-secondary text-sm">إلغاء</button>
           </div>
         </form>
       )}
