@@ -179,15 +179,11 @@ export function calculateSubjectShortage(
     const cadre = (teacher.cadre_position || '').trim();
     const cadreQuotas = CADRE_QUOTAS[stage] as Record<string, number>;
     
-    // بحث مباشر أولاً، ثم جزئي
+    // بحث مباشر (تطابق تام)
     let quota = cadreQuotas[cadre];
-    if (!quota) {
-      // بحث جزئي مع استبعاد "بدون كادر" و"غير مخاطب"
-      const matchedKey = Object.keys(cadreQuotas).find(k =>
-        k !== 'بدون كادر' && k !== 'غير مخاطب' && (cadre.includes(k) || k.includes(cadre))
-      );
-      // إذا التخصص موجود والكادر مجهول → 24 حصة (القاعدة الوزارية)
-      quota = matchedKey ? cadreQuotas[matchedKey] : 24;
+    if (quota === undefined) {
+      // إذا كان الكادر مجهول أو غير موجود في القائمة → 24 حصة (القاعدة الوزارية)
+      quota = 24;
     }
     availablePeriods += quota;
   });

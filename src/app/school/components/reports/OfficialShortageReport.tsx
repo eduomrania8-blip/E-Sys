@@ -133,14 +133,9 @@ export function OfficialShortageReport({ classStats, staff, school, stage = 'pri
     matched.forEach(t => {
       const cadre = (t.cadre_position || '').trim();
       const cadreQuotas = quotas as Record<string, number>;
-      // بحث مباشر أولاً
       let quota = cadreQuotas[cadre];
-      if (!quota) {
-        // بحث جزئي
-        const key = Object.keys(cadreQuotas).find(k =>
-          k !== 'بدون كادر' && k !== 'غير مخاطب' && (cadre.includes(k) || k.includes(cadre))
-        );
-        quota = key ? cadreQuotas[key] : 24; // إذا التخصص موجود والكادر مجهول = 24
+      if (quota === undefined) {
+        quota = 24; // إذا التخصص موجود والكادر مجهول = 24
       }
       periods += quota;
     });
@@ -264,7 +259,7 @@ export function OfficialShortageReport({ classStats, staff, school, stage = 'pri
                   {cadreRows.map(([cadre]) => {
                     const count = row.teachers.filter(t => {
                       const c = (t.cadre_position || '').trim();
-                      return c === cadre || c.includes(cadre) || cadre.includes(c);
+                      return c === cadre;
                     }).length;
                     return <td key={cadre} className="p-1 border border-gray-400">{count || '—'}</td>;
                   })}
@@ -297,7 +292,7 @@ export function OfficialShortageReport({ classStats, staff, school, stage = 'pri
                   {cadreRows.map(([cadre]) => {
                     const count = row.teachers.filter(t => {
                       const c = (t.cadre_position || '').trim();
-                      return c === cadre || c.includes(cadre) || cadre.includes(c);
+                      return c === cadre;
                     }).length;
                     return <td key={cadre} className="p-1 border border-gray-400">{count || '—'}</td>;
                   })}
@@ -334,7 +329,7 @@ export function OfficialShortageReport({ classStats, staff, school, stage = 'pri
                 {cadreRows.map(([cadre]) => {
                   const cnt = activeTeachers.filter(t => {
                     const c = (t.cadre_position || '').trim();
-                    return c === cadre || c.includes(cadre) || cadre.includes(c);
+                    return c === cadre;
                   }).length;
                   return <td key={cadre} className="p-1 border border-gray-500">{cnt || '—'}</td>;
                 })}
