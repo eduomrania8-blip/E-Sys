@@ -322,50 +322,82 @@ export default function StudentsListForm({ schoolId }: { schoolId: string }) {
             {[...Array(5)].map((_, i) => <div key={i} className="h-12 skeleton-shimmer rounded-lg" />)}
           </div>
         ) : filteredStudents.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-right text-sm">
-              <thead className="bg-gray-50 text-gray-500 border-b border-gray-100 font-black">
-                <tr>
-                  <th className="px-5 py-4 text-xs">#</th>
-                  <th className="px-5 py-4 text-xs">اسم الطالب</th>
-                  <th className="px-5 py-4 text-xs">الصف</th>
-                  <th className="px-5 py-4 text-xs">الفصل</th>
-                  {listType === 'low' && <th className="px-5 py-4 text-xs">الملاحظات</th>}
-                  {listType === 'inclusion' && <th className="px-5 py-4 text-xs">نوع الإعاقة</th>}
-                  {listType === 'expatriate' && <th className="px-5 py-4 text-xs">الجنسية</th>}
-                  {listType === 'refugee' && <th className="px-5 py-4 text-xs">التصنيف</th>}
-                  <th className="px-5 py-4 text-xs text-center">إجراءات</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {filteredStudents.map((s, idx) => (
-                  <tr key={s.id} className="hover:bg-gray-50/50 transition-colors group">
-                    <td className="px-5 py-3 text-xs text-gray-400 font-mono">{idx + 1}</td>
-                    <td className="px-5 py-3 font-bold text-gray-900">{s.student_full_name}</td>
-                    <td className="px-5 py-3 text-gray-600">{s.grade_level}</td>
-                    <td className="px-5 py-3 text-gray-500">{s.class_name || '—'}</td>
-                    {listType === 'low' && <td className="px-5 py-3 text-xs text-gray-500 max-w-[200px] truncate">{s.notes || '—'}</td>}
-                    {listType === 'inclusion' && (
-                      <td className="px-5 py-3">
-                        <span className="badge-info">{s.disability_type || '—'}</span>
-                      </td>
-                    )}
-                    {listType === 'expatriate' && <td className="px-5 py-3 text-gray-600">{s.country || '—'}</td>}
-                    {listType === 'refugee' && (
-                      <td className="px-5 py-3">
-                        <span className="badge-neutral">{s.refugee_classification || '—'}</span>
-                      </td>
-                    )}
-                    <td className="px-5 py-3 text-center">
-                      <button onClick={() => setConfirmDelete(s.id)}
-                        className="text-red-400 hover:text-red-600 hover:bg-red-50 p-2 rounded-lg transition-all opacity-0 group-hover:opacity-100">
-                        🗑️
-                      </button>
-                    </td>
+          <div>
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-right text-sm">
+                <thead className="bg-gray-50 text-gray-500 border-b border-gray-100 font-black">
+                  <tr>
+                    <th className="px-5 py-4 text-xs">#</th>
+                    <th className="px-5 py-4 text-xs">اسم الطالب</th>
+                    <th className="px-5 py-4 text-xs">الصف</th>
+                    <th className="px-5 py-4 text-xs">الفصل</th>
+                    {listType === 'low' && <th className="px-5 py-4 text-xs">الملاحظات</th>}
+                    {listType === 'inclusion' && <th className="px-5 py-4 text-xs">نوع الإعاقة</th>}
+                    {listType === 'expatriate' && <th className="px-5 py-4 text-xs">الجنسية</th>}
+                    {listType === 'refugee' && <th className="px-5 py-4 text-xs">التصنيف</th>}
+                    <th className="px-5 py-4 text-xs text-center">إجراءات</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {filteredStudents.map((s, idx) => (
+                    <tr key={s.id} className="hover:bg-gray-50/50 transition-colors group">
+                      <td className="px-5 py-3 text-xs text-gray-400 font-mono">{idx + 1}</td>
+                      <td className="px-5 py-3 font-bold text-gray-900">{s.student_full_name}</td>
+                      <td className="px-5 py-3 text-gray-600">{s.grade_level}</td>
+                      <td className="px-5 py-3 text-gray-500">{s.class_name || '—'}</td>
+                      {listType === 'low' && <td className="px-5 py-3 text-xs text-gray-500 max-w-[200px] truncate">{s.notes || '—'}</td>}
+                      {listType === 'inclusion' && (
+                        <td className="px-5 py-3">
+                          <span className="badge-info">{s.disability_type || '—'}</span>
+                        </td>
+                      )}
+                      {listType === 'expatriate' && <td className="px-5 py-3 text-gray-600">{s.country || '—'}</td>}
+                      {listType === 'refugee' && (
+                        <td className="px-5 py-3">
+                          <span className="badge-neutral">{s.refugee_classification || '—'}</span>
+                        </td>
+                      )}
+                      <td className="px-5 py-3 text-center">
+                        <button onClick={() => setConfirmDelete(s.id)}
+                          className="text-red-400 hover:text-red-600 hover:bg-red-50 p-2 rounded-lg transition-all opacity-0 group-hover:opacity-100">
+                          🗑️
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="md:hidden divide-y divide-gray-100">
+              {filteredStudents.map((s, idx) => (
+                <div key={s.id} className="p-4 space-y-3 bg-white">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h4 className="font-bold text-gray-900 text-sm">{idx + 1}. {s.student_full_name}</h4>
+                      <p className="text-xs text-gray-500 mt-1">الصف {s.grade_level} {s.class_name ? `(${s.class_name})` : ''}</p>
+                    </div>
+                    {listType === 'inclusion' && <span className="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full font-bold">{s.disability_type || '—'}</span>}
+                    {listType === 'refugee' && <span className="text-[10px] bg-purple-100 text-purple-700 px-2 py-1 rounded-full font-bold">{s.refugee_classification || '—'}</span>}
+                    {listType === 'expatriate' && <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-bold">{s.country || '—'}</span>}
+                  </div>
+                  
+                  {listType === 'low' && s.notes && (
+                    <div className="text-xs text-gray-600 bg-gray-50 p-2 rounded-lg border border-gray-100">
+                      <span className="font-bold">ملاحظات:</span> {s.notes}
+                    </div>
+                  )}
+
+                  <div className="flex justify-end pt-2 border-t border-gray-50">
+                    <button onClick={() => setConfirmDelete(s.id)} className="text-xs font-bold text-red-600 bg-red-50 px-3 py-1.5 rounded-lg flex items-center gap-1">
+                      🗑️ حذف السجل
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         ) : (
           <div className="text-center py-16">

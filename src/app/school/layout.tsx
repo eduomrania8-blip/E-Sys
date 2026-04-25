@@ -44,7 +44,11 @@ export default async function SchoolLayout({ children }: { children: React.React
         canEdit={perm.permission_level === 'edit' || perm.permission_level === 'admin'}
       />
       <main className="flex-1 overflow-auto">
-        <div className="p-8 max-w-screen-xl mx-auto">{children}</div>
+        <div className="p-4 md:p-8 max-w-screen-xl mx-auto min-h-screen">
+          {/* مسافة علوية للموبايل لتجنب تداخل زر القائمة مع المحتوى */}
+          <div className="md:hidden h-10 w-full" />
+          {children}
+        </div>
       </main>
     </div>
   );

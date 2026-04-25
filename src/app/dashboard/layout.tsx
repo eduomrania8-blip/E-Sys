@@ -17,21 +17,25 @@ export default function DashboardLayout({
       <Sidebar />
       <main className="flex-1 overflow-auto relative">
         {/* Top Actions Bar */}
-        <div className="sticky top-0 z-40 bg-gray-50/80 backdrop-blur border-b border-gray-100 px-8 py-3 flex justify-between items-center gap-4">
+        <div className="sticky top-0 z-30 bg-gray-50/90 backdrop-blur border-b border-gray-100 px-4 md:px-8 py-3 flex justify-between items-center gap-2 md:gap-4 min-h-[64px]">
           {/* Right side: Search */}
-          <GlobalSearch />
+          <div className="flex-1 max-w-md pr-8 md:pr-0">
+            <GlobalSearch />
+          </div>
           
           {/* Left side: Greeting + Actions */}
-          <div className="flex items-center gap-3">
-            <UserGreeting />
-            <div className="h-6 w-px bg-gray-200" />
+          <div className="flex items-center gap-2 md:gap-3 shrink-0">
+            <div className="hidden sm:block">
+              <UserGreeting />
+            </div>
+            <div className="hidden sm:block h-6 w-px bg-gray-200" />
             <AIInsightsPanel />
             <NotificationBell />
             <div className="h-6 w-px bg-gray-200" />
             <LogoutButton />
           </div>
         </div>
-        <div className="p-8 max-w-screen-xl mx-auto">
+        <div className="p-4 md:p-8 max-w-screen-xl mx-auto">
           {children}
         </div>
       </main>

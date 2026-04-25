@@ -178,40 +178,76 @@ export default function StaffForm({ schoolId }: { schoolId: string }) {
         </div>
         <div className="flex gap-2">
           <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="بحث..." className="input-field w-48 text-xs" />
-          <button onClick={() => setShowForm(!showForm)} className="btn-primary text-xs px-4 bg-orange-600 border-orange-600 hover:bg-orange-700">{showForm ? '✕ إلغاء' : '+ إضافة موظف'}</button>
+          <button onClick={() => setShowForm(!showForm)} className="btn-primary text-xs px-4 bg-blue-600 border-blue-600 hover:bg-blue-700">{showForm ? '✕ إلغاء' : '+ إضافة موظف'}</button>
         </div>
       </div>
 
       {/* Smart Form */}
       {showForm && (
-        <form onSubmit={handleAdd} className="p-6 bg-white border border-orange-200 shadow-xl rounded-2xl animate-slide-down space-y-5">
-          <div className="flex gap-2 mb-4">
-            {JOB_CATEGORIES.map(cat => (
-              <button key={cat.value} type="button" onClick={() => setForm({ ...form, job_category: cat.value, employment_type: isPublicSchool ? 'تعيين' : 'بالعقد' })}
-                className={`flex-1 py-3 rounded-xl text-sm font-black transition-all ${form.job_category === cat.value ? `bg-${cat.color}-600 text-white shadow-md shadow-${cat.color}-200` : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}>
-                {cat.icon} {cat.label}
-              </button>
-            ))}
+        <form onSubmit={handleAdd} className="bg-white border border-slate-200 shadow-xl rounded-2xl animate-slide-down overflow-hidden">
+          {/* Header */}
+          <div className="bg-slate-50 border-b border-slate-100 p-5">
+            <h2 className="text-lg font-black text-slate-800">إضافة سجل وظيفي جديد</h2>
+            <p className="text-xs text-slate-500 mt-1">يرجى إدخال البيانات بدقة لضمان صحة التقارير والإحصاءات.</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div><label className="text-xs font-bold text-gray-500 mb-1 block">الاسم رباعياً *</label><input required type="text" className="input-field w-full" value={form.full_name_ar} onChange={e => setForm({...form, full_name_ar: e.target.value})} placeholder="الاسم بالكامل" /></div>
-            <div><label className="text-xs font-bold text-gray-500 mb-1 block">الرقم القومي</label><input type="text" className="input-field w-full font-mono" maxLength={14} value={form.national_id} onChange={e => setForm({...form, national_id: e.target.value.replace(/\D/g, '').slice(0, 14)})} placeholder="14 رقم" dir="ltr" /></div>
-            <div><label className="text-xs font-bold text-gray-500 mb-1 block">رقم الهاتف</label><input type="text" className="input-field w-full font-mono" maxLength={11} value={form.phone} onChange={e => setForm({...form, phone: e.target.value.replace(/\D/g, '').slice(0, 11)})} placeholder="01XXXXXXXXX" dir="ltr" /></div>
-          </div>
+          <div className="p-6 space-y-8">
+            {/* Category Selector */}
+            <div className="flex gap-3">
+              {JOB_CATEGORIES.map(cat => (
+                <button key={cat.value} type="button" onClick={() => setForm({ ...form, job_category: cat.value, employment_type: isPublicSchool ? 'تعيين' : 'بالعقد' })}
+                  className={`flex-1 py-3 rounded-xl text-sm font-black transition-all border ${form.job_category === cat.value ? `bg-${cat.color}-50 border-${cat.color}-200 text-${cat.color}-700 shadow-sm ring-1 ring-${cat.color}-500` : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'}`}>
+                  <span className="text-xl block mb-1">{cat.icon}</span> {cat.label}
+                </button>
+              ))}
+            </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div><label className="text-xs font-bold text-gray-500 mb-1 block">المؤهل الدراسي</label><input type="text" className="input-field w-full" value={form.qualification} onChange={e => setForm({...form, qualification: e.target.value})} placeholder="مثال: بكالوريوس تربية" /></div>
-            <div><label className="text-xs font-bold text-gray-500 mb-1 block">تاريخ المؤهل</label><input type="date" className="input-field w-full" value={form.qualification_date} onChange={e => setForm({...form, qualification_date: e.target.value})} /></div>
-            <div><label className="text-xs font-bold text-gray-500 mb-1 block">تاريخ التعيين</label><input type="date" className="input-field w-full" value={form.hire_date} onChange={e => setForm({...form, hire_date: e.target.value})} /></div>
-          </div>
+            {/* Section 1: Basic Info */}
+            <div className="space-y-4">
+              <h3 className="font-bold text-slate-700 border-b pb-2">البيانات الأساسية</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-600 block">الاسم رباعياً <span className="text-red-500">*</span></label>
+                  <input required type="text" className={`input-field w-full ${form.full_name_ar.length > 0 && form.full_name_ar.trim().length < 3 ? 'border-red-300 bg-red-50 focus:ring-red-500' : ''}`} value={form.full_name_ar} onChange={e => setForm({...form, full_name_ar: e.target.value})} placeholder="الاسم بالكامل" />
+                  {form.full_name_ar.length > 0 && form.full_name_ar.trim().length < 3 && <p className="text-[10px] text-red-600 font-bold">⚠️ يجب أن يكون 3 حروف على الأقل</p>}
+                </div>
+                
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-600 block">الرقم القومي</label>
+                  <div className="relative">
+                    <span className="absolute right-3 top-2.5 text-slate-400">🪪</span>
+                    <input type="text" className={`input-field w-full font-mono pl-3 pr-9 ${form.national_id.length > 0 && form.national_id.length < 14 ? 'border-red-300 bg-red-50 focus:ring-red-500' : ''}`} maxLength={14} value={form.national_id} onChange={e => setForm({...form, national_id: e.target.value.replace(/\D/g, '').slice(0, 14)})} placeholder="14 رقم" dir="ltr" />
+                  </div>
+                  {form.national_id.length > 0 && form.national_id.length < 14 && <p className="text-[10px] text-red-600 font-bold">⚠️ يجب أن يتكون من 14 رقماً</p>}
+                </div>
+                
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-600 block">رقم الهاتف</label>
+                  <div className="relative">
+                    <span className="absolute right-3 top-2.5 text-slate-400">📱</span>
+                    <input type="text" className={`input-field w-full font-mono pl-3 pr-9 ${form.phone.length > 0 && form.phone.length < 11 ? 'border-red-300 bg-red-50 focus:ring-red-500' : ''}`} maxLength={11} value={form.phone} onChange={e => setForm({...form, phone: e.target.value.replace(/\D/g, '').slice(0, 11)})} placeholder="01XXXXXXXXX" dir="ltr" />
+                  </div>
+                  {form.phone.length > 0 && form.phone.length < 11 && <p className="text-[10px] text-red-600 font-bold">⚠️ يجب أن يتكون من 11 رقماً</p>}
+                </div>
+              </div>
+            </div>
 
-          <hr className="border-gray-100" />
+            {/* Section 2: Qualifications */}
+            <div className="space-y-4">
+              <h3 className="font-bold text-slate-700 border-b pb-2">بيانات المؤهل والتعيين</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <div className="space-y-1"><label className="text-xs font-bold text-slate-600 block">المؤهل الدراسي</label><input type="text" className="input-field w-full" value={form.qualification} onChange={e => setForm({...form, qualification: e.target.value})} placeholder="مثال: بكالوريوس تربية" /></div>
+                <div className="space-y-1"><label className="text-xs font-bold text-slate-600 block">تاريخ المؤهل</label><input type="date" className="input-field w-full" value={form.qualification_date} onChange={e => setForm({...form, qualification_date: e.target.value})} /></div>
+                <div className="space-y-1"><label className="text-xs font-bold text-slate-600 block">تاريخ التعيين</label><input type="date" className="input-field w-full" value={form.hire_date} onChange={e => setForm({...form, hire_date: e.target.value})} /></div>
+              </div>
+            </div>
 
-          {/* Conditional Fields Based on Job Category */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-gray-50 p-4 rounded-xl border border-gray-100">
-            {/* المشترك */}
-            <div><label className="text-xs font-bold text-gray-500 mb-1 block">العمل المكلف به بالمدرسة</label><input type="text" className="input-field w-full" value={form.school_role} onChange={e => setForm({...form, school_role: e.target.value})} placeholder="مثال: شئون طلبة / تدريس" /></div>
+            {/* Section 3: Job Details */}
+            <div className="space-y-4">
+              <h3 className="font-bold text-slate-700 border-b pb-2">التفاصيل الوظيفية ({form.job_category})</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5 bg-slate-50 p-5 rounded-2xl border border-slate-100">
+                {/* المشترك */}
+                <div className="space-y-1"><label className="text-xs font-bold text-slate-600 block">العمل المكلف به بالمدرسة</label><input type="text" className="input-field w-full bg-white" value={form.school_role} onChange={e => setForm({...form, school_role: e.target.value})} placeholder="مثال: شئون طلبة / تدريس" /></div>
             
             {/* نوع التعيين (Hiring Type) */}
             <div>
@@ -275,11 +311,16 @@ export default function StaffForm({ schoolId }: { schoolId: string }) {
                 </select>
               </div>
             )}
+              </div>
+            </div>
           </div>
 
-          <button type="submit" disabled={loading} className="btn-primary w-full py-3 mt-2 text-sm">
-            {loading ? 'جاري الحفظ...' : 'حفظ البيانات'}
-          </button>
+          <div className="bg-slate-50 border-t border-slate-100 p-5 flex justify-end gap-3">
+            <button type="button" onClick={() => setShowForm(false)} className="px-6 py-2.5 rounded-xl text-sm font-bold text-slate-600 bg-white border border-slate-200 hover:bg-slate-100 transition-colors">إلغاء</button>
+            <button type="submit" disabled={loading} className="btn-primary px-8 py-2.5 text-sm shadow-lg shadow-blue-200">
+              {loading ? 'جاري الحفظ...' : 'حفظ البيانات'}
+            </button>
+          </div>
         </form>
       )}
 
