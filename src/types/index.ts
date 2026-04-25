@@ -68,6 +68,10 @@ export type Database = {
           national_id: string;
           full_name_ar: string;
           phone: string | null;
+          qualification: string | null;
+          qualification_date: string | null;
+          subject_taught: string | null;
+          school_role: string | null;
           job_title: LeaderJobTitle | null;
           cadre: string | null;
           appointment_type: AppointmentType | null;
@@ -88,7 +92,12 @@ export type Database = {
           teacher_code: string | null;
           national_id: string;
           full_name_ar: string;
+          phone: string | null;
           qualification: string | null;
+          qualification_date: string | null;
+          subject_taught: string | null;
+          school_role: string | null;
+          worker_type: string | null;
           cadre_position: string | null;
           employment_type: AppointmentType | null;
           cadre_status: 'له كادر' | 'ليس له كادر' | null;
@@ -96,7 +105,6 @@ export type Database = {
           original_school_id: string | null;
           hire_date: string | null;
           retirement_date: string | null;
-          phone: string | null;
           work_status: WorkStatus | null;
           created_at: string;
           updated_at: string;
@@ -301,9 +309,9 @@ export type GradeLevel =
 export type LeaderJobTitle =
   | 'مدير' | 'وكيل شئون العاملين' | 'وكيل شئون الطلاب'
   | 'مسئول الإحصاء' | 'مسئول الدمج' | 'مسئول القرائية'
-  | 'مسئول وحدة التدريب' | 'رئيس الكنترول';
+  | 'مسئول وحدة التدريب' | 'رئيس الكنترول' | 'مسئول أمن';
 
-export type AppointmentType = 'أساسي' | 'بالأجر' | 'معاش';
+export type AppointmentType = 'تعيين' | 'صناديق خاصة' | 'بالعقد' | 'بالمكافأة' | 'بالحصة (أجر)' | 'بالحصة (معاش)' | 'أساسي' | 'بالأجر' | 'معاش';
 
 export type WorkStatus =
   | 'على رأس العمل' | 'إجازة مرضي' | 'إجازة رعاية طفل'

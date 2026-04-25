@@ -153,10 +153,27 @@ export default function ReportsPage() {
 function ReportDensity({ data }: { data: any }) {
   const { density, summary } = data;
   const sorted = [...(summary ?? [])].sort((a: any, b: any) => Number(b.avg_density) - Number(a.avg_density));
+  
+  const danger = sorted.filter(s => Number(s.avg_density) > 50).length;
+  const warning = sorted.filter(s => Number(s.avg_density) > 40 && Number(s.avg_density) <= 50).length;
+  const safe = sorted.filter(s => Number(s.avg_density) <= 40).length;
+
   return (
     <div className="card p-6">
       <h2 className="text-xl font-black text-gray-900 mb-1 text-center">تقرير الكثافة الطلابية</h2>
       <p className="text-xs text-gray-400 text-center mb-6">العام الدراسي 2025-2026 | إجمالي المدارس: {sorted.length}</p>
+
+      {/* Data Storytelling Banner */}
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-2xl p-5 mb-6 text-right">
+        <h3 className="text-sm font-black text-blue-900 mb-2 flex items-center gap-2">
+          <span>💡</span> رؤية تحليلية
+        </h3>
+        <p className="text-sm text-blue-800 leading-relaxed font-medium">
+          من بين <strong>{sorted.length}</strong> مدرسة، تبين أن هناك <strong>{danger}</strong> مدرسة تعاني من كثافة شديدة (أكثر من 50 طالب/فصل) وتحتاج إلى تدخل عاجل، 
+          بينما يوجد <strong>{warning}</strong> مدرسة في منطقة الحذر (40-50). وتظل <strong>{safe}</strong> مدرسة ضمن المعدلات الآمنة.
+        </p>
+      </div>
+
       <table className="w-full text-sm text-right border-collapse">
         <thead><tr className="bg-gray-100 text-xs font-black text-gray-600">
           <th className="p-2 border">#</th><th className="p-2 border">المدرسة</th><th className="p-2 border">الكود</th>
@@ -247,11 +264,32 @@ function ReportExpat({ data }: { data: any }) {
 }
 
 function ReportStaff({ data }: { data: any[] }) {
-  const totals = { teachers: 0, admins: 0, workers: 0 };
-  data.forEach((s: any) => { totals.teachers += Number(s.teacher_count) || 0; totals.admins += Number(s.admin_count) || 0; totals.workers += Number(s.worker_count) || 0; });
+  const totals = { teachers: 0, admins: 0, workers: 0, students: 0 };
+  data.forEach((s: any) => { 
+    totals.teachers += Number(s.teacher_count) || 0; 
+    totals.admins += Number(s.admin_count) || 0; 
+    totals.workers += Number(s.worker_count) || 0; 
+    totals.students += Number(s.total_students) || 0; 
+  });
+  
+  const totalStaff = totals.teachers + totals.admins + totals.workers;
+  const ratio = totals.teachers > 0 ? (totals.students / totals.teachers).toFixed(1) : '—';
+
   return (
     <div className="card p-6">
-      <h2 className="text-xl font-black text-gray-900 mb-4 text-center">تقرير العاملين الإحصائي</h2>
+      <h2 className="text-xl font-black text-gray-900 mb-4 text-center">تقرير القوة العاملة (إحصائي)</h2>
+
+      {/* Data Storytelling Banner */}
+      <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-100 rounded-2xl p-5 mb-6 text-right">
+        <h3 className="text-sm font-black text-emerald-900 mb-2 flex items-center gap-2">
+          <span>📊</span> قراءة في الأرقام
+        </h3>
+        <p className="text-sm text-emerald-800 leading-relaxed font-medium">
+          يبلغ إجمالي القوة العاملة في المدارس <strong>{totalStaff}</strong> موظفاً، ويشكل المعلمون النسبة الأكبر بـ <strong>{totals.teachers}</strong> معلماً.
+          وبناءً على إجمالي عدد الطلاب، فإن نسبة "الطالب للمعلم" الإجمالية هي <strong>{ratio}</strong> طالب لكل معلم.
+        </p>
+      </div>
+
       <table className="w-full text-xs text-right border-collapse">
         <thead><tr className="bg-gray-100 font-black"><th className="p-2 border">#</th><th className="p-2 border">المدرسة</th><th className="p-2 border">الكود</th><th className="p-2 border">معلمون</th><th className="p-2 border">إداريون</th><th className="p-2 border">عمال</th><th className="p-2 border">الإجمالي</th><th className="p-2 border">طلاب</th><th className="p-2 border">طالب/معلم</th></tr></thead>
         <tbody>{data.map((s: any, i: number) => {

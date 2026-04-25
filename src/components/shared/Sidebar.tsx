@@ -31,7 +31,14 @@ const navLinks = [
     href: '/dashboard/analytics',
     label: 'مركز التحليلات',
     icon: '📈',
-    description: 'إحصاءات ورسوم',
+    exact: true,
+    description: 'إحصاءات الطلاب',
+  },
+  {
+    href: '/dashboard/analytics/staff',
+    label: 'تقارير العاملين',
+    icon: '👥',
+    description: 'العجز والزيادة',
   },
   {
     href: '/dashboard/upload',

@@ -3,6 +3,7 @@ import React from 'react';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import Link from 'next/link';
+import DensityChart from '@/components/dashboard/DensityChart';
 
 export default async function DashboardPage() {
   const cookieStore = cookies();
@@ -36,6 +37,12 @@ export default async function DashboardPage() {
 
   const dangerSchools  = highDensity.filter((s: any) => s.density_status === 'خطر').length;
   const warningSchools = highDensity.filter((s: any) => s.density_status === 'مرتفع').length;
+  const safeSchools = totalSchools - highDensityCount;
+
+  // حساب توزيع الكثافة الدقيق من بيانات school_summary
+  const densitySafe    = summary.filter((s: any) => Number(s.avg_density) <= 40).length;
+  const densityWarning = summary.filter((s: any) => { const d = Number(s.avg_density); return d > 40 && d <= 50; }).length;
+  const densityDanger  = summary.filter((s: any) => Number(s.avg_density) > 50).length;
 
   return (
     <div className="space-y-8 animate-in" dir="rtl">
@@ -111,6 +118,19 @@ export default async function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* ═══════ Charts & Analytics ═══════ */}
+        <section className="card p-6 flex flex-col">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-base font-black text-gray-900 flex items-center gap-2">
+              <span className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center text-sm">📊</span>
+              التوزيع الكثافي للمدارس
+            </h2>
+          </div>
+          <div className="flex-1 flex items-center justify-center min-h-[250px]">
+            <DensityChart safe={densitySafe} warning={densityWarning} danger={densityDanger} />
+          </div>
+        </section>
+
         {/* ═══════ High Density Table ═══════ */}
         <section className="lg:col-span-2 card p-6">
           <div className="flex items-center justify-between mb-5">
@@ -175,23 +195,24 @@ export default async function DashboardPage() {
         </section>
 
         {/* ═══════ Quick Actions & Links ═══════ */}
-        <div className="space-y-5">
+        <div className="space-y-5 lg:col-span-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {/* Quick Links Card */}
-          <section className="card p-5">
+          <section className="card p-5 lg:col-span-2">
             <h2 className="text-base font-black text-gray-900 mb-4 flex items-center gap-2">
               <span className="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center text-sm">⚡</span>
               روابط سريعة
             </h2>
-            <div className="space-y-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <QuickLink href="/dashboard/schools/new" label="إضافة مدرسة جديدة" color="emerald" icon="➕" desc="تسجيل مدرسة في القاعدة" />
               <QuickLink href="/dashboard/upload" label="استيراد البيانات" color="blue" icon="⬆️" desc="رفع ملفات Excel" />
               <QuickLink href="/dashboard/analytics" label="الرسوم والتحليلات" color="purple" icon="📈" desc="مؤشرات الأداء" />
+              <QuickLink href="/dashboard/analytics/staff" label="تقارير العاملين" color="indigo" icon="👥" desc="حساب العجز والزيادة" />
               <QuickLink href="/dashboard/reports" label="مركز التقارير" color="orange" icon="🖨️" desc="طباعة وتصدير الكشوف" />
             </div>
           </section>
 
           {/* Quick Export Card */}
-          <section className="bg-gradient-to-br from-gray-900 to-gray-800 p-6 rounded-2xl text-white shadow-xl relative overflow-hidden group hover:shadow-2xl transition-all">
+          <section className="bg-gradient-to-br from-gray-900 to-gray-800 p-6 rounded-2xl text-white shadow-xl relative overflow-hidden group hover:shadow-2xl transition-all h-full flex flex-col justify-center">
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl group-hover:bg-white/10 transition-colors" />
             <h2 className="text-base font-black mb-1 relative z-10 flex items-center gap-2">
               <span>📥</span> تصدير الإدارة بالكامل
@@ -228,6 +249,7 @@ function QuickLink({ href, label, desc, color, icon }: any) {
     emerald: 'hover:bg-emerald-50 border-emerald-100 text-emerald-700 hover:border-emerald-200',
     purple:  'hover:bg-purple-50 border-purple-100 text-purple-700 hover:border-purple-200',
     orange:  'hover:bg-orange-50 border-orange-100 text-orange-700 hover:border-orange-200',
+    indigo:  'hover:bg-indigo-50 border-indigo-100 text-indigo-700 hover:border-indigo-200',
   };
   return (
     <Link href={href} className={`flex items-center gap-3 p-3 border rounded-xl transition-all ${themes[color]}`}>

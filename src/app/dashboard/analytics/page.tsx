@@ -11,6 +11,7 @@ import {
   RadialBarChart, RadialBar,
 } from 'recharts';
 import { SkeletonPage } from '@/components/shared/SkeletonLoader';
+import { sortStatsByGrade, gradeOrderMap } from '@/utils/gradeSorter';
 
 export default function AnalyticsPage() {
   const supabase = createBrowserClient(
@@ -32,7 +33,7 @@ export default function AnalyticsPage() {
       ]);
       setSchools(summaryRes.data ?? []);
       setDensity(densityRes.data ?? []);
-      setClassStats(statsRes.data ?? []);
+      setClassStats(sortStatsByGrade(statsRes.data ?? []));
       setLoading(false);
     })();
   }, []);
@@ -371,7 +372,8 @@ export default function AnalyticsPage() {
           <p className="text-xs text-gray-400 mb-6 font-bold">متوسط كثافة كل صف على مستوى المدارس (طالب/فصل)</p>
           
           {(() => {
-            const grades = ['KG1', 'KG2', 'الأول', 'الثاني', 'الثالث', 'الرابع', 'الخامس', 'السادس'];
+            // استخراج الصفوف الموجودة فعلياً وترتيبها
+            const uniqueGrades = Array.from(new Set(classStats.map(s => s.grade_level))).sort((a, b) => (gradeOrderMap[a] || 99) - (gradeOrderMap[b] || 99));
             // تجميع البيانات حسب المدرسة
             const schoolMap = new Map<string, { name: string; grades: Map<string, { boys: number; girls: number; classes: number }> }>();
             classStats.forEach((s: any) => {
@@ -397,13 +399,13 @@ export default function AnalyticsPage() {
                   <thead>
                     <tr className="bg-gray-900 text-white font-black tracking-wider">
                       <th className="p-3 border-b border-gray-800 text-right sticky right-0 bg-gray-900 z-10 whitespace-nowrap min-w-[200px]">المدرسة</th>
-                      {grades.map(g => <th key={g} className="p-3 border-l border-b border-gray-800 whitespace-nowrap">{g}</th>)}
+                      {uniqueGrades.map(g => <th key={g} className="p-3 border-l border-b border-gray-800 whitespace-nowrap">{g}</th>)}
                       <th className="p-3 border-l border-b border-gray-800 bg-gray-800 text-blue-300">المتوسط</th>
                     </tr>
                   </thead>
                   <tbody>
                     {schoolEntries.map(([id, school], index) => {
-                      const densities = grades.map(g => {
+                      const densities = uniqueGrades.map(g => {
                         const data = school.grades.get(g);
                         if (!data || data.classes === 0) return null;
                         return Math.round((data.boys + data.girls) / data.classes * 10) / 10;
@@ -443,8 +445,8 @@ export default function AnalyticsPage() {
           </h2>
           <p className="text-xs text-gray-400 mb-6 font-bold">مجموع بنين وبنات كل صف عبر جميع المدارس المستهدفة</p>
           {(() => {
-            const gradeOrder = ['KG1', 'KG2', 'الأول', 'الثاني', 'الثالث', 'الرابع', 'الخامس', 'السادس'];
-            const gradeData = gradeOrder.map(g => {
+            const uniqueGrades = Array.from(new Set(classStats.map(s => s.grade_level))).sort((a, b) => (gradeOrderMap[a] || 99) - (gradeOrderMap[b] || 99));
+            const gradeData = uniqueGrades.map(g => {
               const matching = classStats.filter((s: any) => s.grade_level === g);
               return {
                 name: g,

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { supabaseBrowser } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import NotificationBell from './NotificationBell';
+import AIInsightsPanel from './AIInsightsPanel';
 
 export const TopBar: React.FC = () => {
   const router = useRouter();
@@ -37,6 +38,7 @@ export const TopBar: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-4">
+          <AIInsightsPanel />
           <NotificationBell />
           
           <div className="h-8 w-px bg-gray-100 mx-2"></div>

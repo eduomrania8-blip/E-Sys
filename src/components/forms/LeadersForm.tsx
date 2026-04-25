@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
+import { sanitizeSubject, sanitizeQualification } from '@/utils/dataSanitizer';
 
 const JOB_TITLES = [
   { value: 'مدير', icon: '👑', color: 'amber' },
@@ -12,6 +13,7 @@ const JOB_TITLES = [
   { value: 'مسئول القرائية', icon: '📖', color: 'rose' },
   { value: 'مسئول وحدة التدريب', icon: '📚', color: 'orange' },
   { value: 'رئيس الكنترول', icon: '📝', color: 'indigo' },
+  { value: 'مسئول أمن', icon: '🛡️', color: 'red' },
 ];
 
 export default function LeadersForm({ schoolId }: { schoolId: string }) {
@@ -23,6 +25,7 @@ export default function LeadersForm({ schoolId }: { schoolId: string }) {
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [leaders, setLeaders] = useState<any[]>([]);
+  const [schoolType, setSchoolType] = useState<string>('رسمية');
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [toast, setToast] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
@@ -45,8 +48,12 @@ export default function LeadersForm({ schoolId }: { schoolId: string }) {
   const [form, setForm] = useState(emptyForm);
 
   const fetchLeaders = useCallback(async () => {
-    const { data } = await supabase.from('school_leaders').select('*').eq('school_id', schoolId).order('created_at', { ascending: false });
-    if (data) setLeaders(data);
+    const [leadersRes, schoolRes] = await Promise.all([
+      supabase.from('school_leaders').select('*').eq('school_id', schoolId).order('created_at', { ascending: false }),
+      supabase.from('schools').select('school_type').eq('id', schoolId).single()
+    ]);
+    if (leadersRes.data) setLeaders(leadersRes.data);
+    if (schoolRes.data?.school_type) setSchoolType(schoolRes.data.school_type);
     setFetching(false);
   }, [schoolId, supabase]);
 
@@ -72,7 +79,13 @@ export default function LeadersForm({ schoolId }: { schoolId: string }) {
       ? form.national_id
       : ('00000000000000' + Math.floor(Math.random() * 100000)).slice(-14);
 
-    const payload = { school_id: schoolId, ...form, national_id: validNid };
+    const payload = { 
+      school_id: schoolId, 
+      ...form, 
+      national_id: validNid,
+      qualification: sanitizeQualification(form.qualification),
+      subject_taught: sanitizeSubject(form.subject_taught)
+    };
 
     let error;
     if (editId) {
@@ -273,13 +286,20 @@ export default function LeadersForm({ schoolId }: { schoolId: string }) {
             <div>
               <label className="block text-[11px] font-bold text-gray-500 mb-1">نوع التعيين</label>
               <div className="flex gap-2">
-                {['أساسي', 'بالأجر', 'معاش'].map(opt => (
-                  <button key={opt} type="button" onClick={() => setForm({ ...form, appointment_type: opt })}
-                    className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all
-                      ${form.appointment_type === opt ? 'bg-blue-600 text-white shadow-md' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
-                    {opt}
+                {['رسمية', 'رسمية لغات', 'فنية'].includes(schoolType) ? (
+                  <button type="button" onClick={() => setForm({ ...form, appointment_type: 'تعيين' })}
+                    className="flex-1 py-2 rounded-lg text-xs font-bold transition-all bg-blue-600 text-white shadow-md">
+                    تعيين أساسي
                   </button>
-                ))}
+                ) : (
+                  ['أساسي', 'بالعقد', 'بالمكافأة'].map(opt => (
+                    <button key={opt} type="button" onClick={() => setForm({ ...form, appointment_type: opt })}
+                      className={`flex-1 py-2 rounded-lg text-[10px] font-bold transition-all
+                        ${form.appointment_type === opt ? 'bg-blue-600 text-white shadow-md' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
+                      {opt}
+                    </button>
+                  ))
+                )}
               </div>
             </div>
             <div>

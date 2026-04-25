@@ -219,4 +219,22 @@ input[type="number"] {
     padding-bottom: 5mm;
     border-bottom: 2px solid #333;
   }
+  /* كشوف المعلمين — قواعد طباعة متخصصة */
+  .print-footer {
+    display: flex !important;
+    justify-content: space-around;
+    margin-top: 30mm;
+    padding-top: 5mm;
+    border-top: 2px solid #333;
+  }
+  .print-footer div { text-align: center; }
+  .print-footer p   { font-weight: 900; margin-bottom: 20mm; }
+  .print-footer small { border-top: 1px solid #888; display: block; padding-top: 3px; font-size: 9px; color: #666; }
+  /* الخلايا في جداول الكشوف */
+  td, th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  /* كشف العجز والزيادة — استخدام A4 أفقي لأنه عريض */
+  .shortage-report-landscape { page-break-before: always; }
 }
+
+/* ─── Report Print Isolation ─── */
+/* تنعزل نافذة الطباعة المفتوحة بـ JS عن بقية الصفحة */

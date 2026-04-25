@@ -101,18 +101,26 @@ export default function LeadersPage() {
   return (
     <div className="space-y-6 animate-in" dir="rtl">
       {/* Header */}
-      <div className="bg-gradient-to-l from-indigo-900 to-blue-900 rounded-2xl p-6 text-white shadow-xl flex justify-between items-center relative overflow-hidden">
+      <div className="bg-gradient-to-l from-indigo-900 to-blue-900 rounded-2xl p-6 text-white shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center relative overflow-hidden gap-4">
         <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] mix-blend-overlay" />
         <div className="relative z-10">
           <h1 className="text-2xl md:text-3xl font-black flex items-center gap-3">
             <span className="bg-white/20 p-2 rounded-xl backdrop-blur">👔</span>
-            دليل القادة (المديرين)
+            لوحة امتثال القيادات
           </h1>
-          <p className="text-blue-200 mt-2 text-sm font-medium">سجل شامل لجميع قيادات المدارس وبيانات التواصل</p>
+          <p className="text-blue-200 mt-2 text-sm font-medium">سجل القيادات وإدارة مدى اكتمال البيانات التشغيلية</p>
         </div>
-        <div className="relative z-10 text-center bg-white/10 backdrop-blur rounded-xl px-6 py-3 border border-white/10">
-          <p className="text-3xl font-black">{leaders.length}</p>
-          <p className="text-xs text-blue-200 font-bold">إجمالي القيادات</p>
+        <div className="relative z-10 flex items-center gap-3">
+          <div className="text-center bg-white/10 backdrop-blur rounded-xl px-4 py-3 border border-white/10">
+            <p className="text-2xl font-black">{leaders.length}</p>
+            <p className="text-[10px] text-blue-200 font-bold uppercase tracking-widest">إجمالي القيادات</p>
+          </div>
+          <div className="text-center bg-red-500/20 backdrop-blur rounded-xl px-4 py-3 border border-red-500/30">
+            <p className="text-2xl font-black text-red-200">
+              {leaders.filter(l => !l.phone || !l.national_id || l.national_id.length < 14).length}
+            </p>
+            <p className="text-[10px] text-red-200 font-bold uppercase tracking-widest">بيانات غير مكتملة</p>
+          </div>
         </div>
       </div>
 
@@ -233,7 +241,17 @@ export default function LeadersPage() {
                           <span className="opacity-0 group-hover:opacity-100 transition-opacity">📞</span>
                         </a>
                       ) : (
-                        <span className="text-gray-300">—</span>
+                        <span className="inline-flex items-center px-2 py-1 bg-red-50 text-red-600 text-[10px] font-black rounded border border-red-100">
+                          ⚠️ مفقود
+                        </span>
+                      )}
+                      
+                      {(!leader.national_id || leader.national_id.length < 14) && (
+                        <div className="mt-1">
+                          <span className="inline-flex items-center px-2 py-1 bg-orange-50 text-orange-600 text-[10px] font-black rounded border border-orange-100">
+                            ⚠️ هوية غير مكتملة
+                          </span>
+                        </div>
                       )}
                     </td>
                   </tr>

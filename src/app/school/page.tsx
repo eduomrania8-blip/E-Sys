@@ -5,6 +5,8 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import { sortStatsByGrade } from '@/utils/gradeSorter';
+import { SchoolTabs } from './components/SchoolTabs';
 
 async function getSchoolContext(supabase: any, userId: string) {
   const { data: perm } = await supabase
@@ -18,9 +20,9 @@ async function getSchoolContext(supabase: any, userId: string) {
   const [schoolRes, buildingRes, statsRes, leadersRes, staffRes, lowRes, inclusionRes] = await Promise.all([
     supabase.from('schools').select('*, educational_administrations(name_ar, governorate)').eq('id', perm.school_id).single(),
     supabase.from('school_buildings').select('*').eq('school_id', perm.school_id).single(),
-    supabase.from('class_statistics').select('*').eq('school_id', perm.school_id).eq('academic_year', '2025-2026').order('grade_level'),
+    supabase.from('class_statistics').select('*').eq('school_id', perm.school_id).eq('academic_year', '2025-2026'),
     supabase.from('school_leaders').select('*').eq('school_id', perm.school_id).order('job_title'),
-    supabase.from('school_staff').select('id, job_category').eq('school_id', perm.school_id),
+    supabase.from('school_staff').select('id, job_category, subject_taught, cadre_position, work_status, full_name_ar, school_role, worker_type').eq('school_id', perm.school_id),
     supabase.from('low_performer_students').select('id').eq('school_id', perm.school_id).eq('academic_year', '2025-2026'),
     supabase.from('inclusion_students_list').select('id').eq('school_id', perm.school_id).eq('academic_year', '2025-2026'),
   ]);
@@ -28,7 +30,7 @@ async function getSchoolContext(supabase: any, userId: string) {
   return {
     school: schoolRes.data,
     building: buildingRes.data,
-    stats: statsRes.data ?? [],
+    stats: sortStatsByGrade(statsRes.data ?? []),
     leaders: leadersRes.data ?? [],
     staff: staffRes.data ?? [],
     lowCount: lowRes.data?.length ?? 0,
@@ -77,7 +79,7 @@ export default async function SchoolHomePage() {
   const completePct = Math.round((completedSections / 5) * 100);
 
   return (
-    <div className="space-y-8 animate-in" dir="rtl">
+    <div className="space-y-6 animate-in" dir="rtl">
       {/* ═══════ Header ═══════ */}
       <header className="relative overflow-hidden bg-gradient-to-l from-emerald-600 via-emerald-700 to-emerald-900 rounded-2xl p-6 text-white shadow-xl">
         <div className="absolute inset-0 opacity-10">
@@ -146,85 +148,32 @@ export default async function SchoolHomePage() {
         <StatCard title="العاملون" value={staff.length} icon="👥" gradient="from-gray-500 to-gray-600" />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* ═══════ Class Stats Table ═══════ */}
-        <section className="lg:col-span-2 card p-6">
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="text-base font-black text-gray-900 flex items-center gap-2">
-              <span className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center text-sm">📊</span>
-              إحصاءات الصفوف — 2025/2026
-            </h2>
-            {totalStudents > 0 && (
-              <div className="flex gap-2 text-[10px] font-bold">
-                <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded-full">بنين: {totalBoys.toLocaleString('ar-EG')}</span>
-                <span className="px-2 py-1 bg-pink-50 text-pink-700 rounded-full">بنات: {totalGirls.toLocaleString('ar-EG')}</span>
-              </div>
-            )}
-          </div>
-          {stats.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm text-right">
-                <thead>
-                  <tr className="border-b border-gray-100 text-xs font-black text-gray-400">
-                    <th className="pb-3 pr-2">الصف</th>
-                    <th className="pb-3">الفصول</th>
-                    <th className="pb-3">بنين</th>
-                    <th className="pb-3">بنات</th>
-                    <th className="pb-3">الإجمالي</th>
-                    <th className="pb-3">الدمج</th>
-                    <th className="pb-3 text-center">الكثافة</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50">
-                  {stats.map((s: any) => {
-                    const total = (s.boys_count || 0) + (s.girls_count || 0);
-                    const d = s.number_of_classes > 0 ? Math.round(total / s.number_of_classes * 10) / 10 : 0;
-                    const inclusionTotal = (s.inclusion_mental || 0) + (s.inclusion_hearing || 0) + (s.inclusion_visual || 0) + (s.inclusion_physical || 0) + (s.inclusion_multiple || 0);
-                    return (
-                      <tr key={s.id} className="hover:bg-gray-50 transition-colors">
-                        <td className="py-2.5 pr-2 font-bold text-gray-900">{s.grade_level}</td>
-                        <td className="py-2.5">{s.number_of_classes}</td>
-                        <td className="py-2.5 text-blue-600">{s.boys_count}</td>
-                        <td className="py-2.5 text-pink-600">{s.girls_count}</td>
-                        <td className="py-2.5 font-black">{total}</td>
-                        <td className="py-2.5">{inclusionTotal > 0 ? inclusionTotal : '—'}</td>
-                        <td className="py-2.5 text-center">
-                          <span className={
-                            d > 60 ? 'badge-danger' : d > 50 ? 'badge-warning' : d > 40 ? 'badge-info' : 'badge-success'
-                          }>{d}</span>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-                <tfoot>
-                  <tr className="border-t-2 border-gray-200 font-black text-gray-900">
-                    <td className="pt-3 pr-2">الإجمالي</td>
-                    <td className="pt-3">{totalClasses}</td>
-                    <td className="pt-3 text-blue-600">{totalBoys}</td>
-                    <td className="pt-3 text-pink-600">{totalGirls}</td>
-                    <td className="pt-3">{totalStudents.toLocaleString('ar-EG')}</td>
-                    <td className="pt-3">{stats.reduce((a: number, s: any) => a + (s.inclusion_mental || 0) + (s.inclusion_hearing || 0) + (s.inclusion_visual || 0) + (s.inclusion_physical || 0) + (s.inclusion_multiple || 0), 0)}</td>
-                    <td className="pt-3 text-center font-black text-blue-600">{avgDensity}</td>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <p className="text-4xl mb-3">📄</p>
-              <p className="text-gray-400 font-bold">لا توجد بيانات إحصائية بعد</p>
-              {canEdit && (
-                <div className="flex justify-center gap-3 mt-4">
-                  <Link href="/school/upload" className="btn-secondary text-sm">⬆️ رفع ملف Excel</Link>
-                  <Link href="/school/manual" className="btn-primary text-sm">✍️ إدخال يدوي</Link>
-                </div>
-              )}
-            </div>
-          )}
-        </section>
+      {/* ═══════ Main Layout ═══════ */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Main Tabbed Panel */}
+        <div className="lg:col-span-2">
+          <SchoolTabs
+            stats={stats}
+            staff={staff}
+            leaders={leaders}
+            building={building}
+            school={school}
+            canEdit={canEdit}
+            totalStudents={totalStudents}
+            totalClasses={totalClasses}
+            totalBoys={totalBoys}
+            totalGirls={totalGirls}
+            avgDensity={avgDensity}
+            teachers={teachers}
+            adminsN={adminsN}
+            workers={workers}
+            lowCount={lowCount}
+            inclusionCount={inclusionCount}
+            schoolId={perm.school_id}
+          />
+        </div>
 
-        {/* ═══════ Right Panel ═══════ */}
+        {/* Right Panel */}
         <div className="space-y-5">
           {/* Quick Actions */}
           <section className="card p-5">
@@ -252,37 +201,6 @@ export default async function SchoolHomePage() {
             </div>
           </section>
 
-          {/* Leaders */}
-          <section className="card p-5">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-black text-gray-900 flex items-center gap-2">
-                <span className="w-7 h-7 rounded-lg bg-purple-100 flex items-center justify-center text-sm">👤</span>
-                القيادات
-              </h2>
-              <span className="text-[10px] font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{leaders.length}</span>
-            </div>
-            {leaders.length > 0 ? (
-              <div className="space-y-2">
-                {leaders.map((l: any) => (
-                  <div key={l.id} className="flex items-center gap-3 p-2.5 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
-                    <div className="w-9 h-9 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-full flex items-center justify-center text-white font-black text-xs shrink-0 shadow-sm">
-                      {l.full_name_ar?.[0]}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs font-bold text-gray-900 truncate">{l.full_name_ar}</p>
-                      <p className="text-[10px] font-black text-emerald-600">{l.job_title}</p>
-                    </div>
-                    {l.phone && (
-                      <span className="text-[9px] text-gray-400 font-mono hidden sm:block">{l.phone}</span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-center text-gray-400 text-sm py-4">لا توجد بيانات</p>
-            )}
-          </section>
-
           {/* Building */}
           {building && (
             <section className="card p-5">
@@ -295,30 +213,6 @@ export default async function SchoolHomePage() {
                 <BldgStat label="المعامل" value={building.total_labs} icon="🔬" />
                 <BldgStat label="الكاميرات" value={building.surveillance_cameras} icon="📷" />
                 <BldgStat label="إنترنت" value={building.has_internet ? '✅' : '❌'} icon="📶" />
-              </div>
-            </section>
-          )}
-
-          {/* Staff Summary */}
-          {staff.length > 0 && (
-            <section className="card p-5">
-              <h2 className="text-base font-black text-gray-900 mb-4 flex items-center gap-2">
-                <span className="w-7 h-7 rounded-lg bg-orange-100 flex items-center justify-center text-sm">👨‍🏫</span>
-                العاملون
-              </h2>
-              <div className="grid grid-cols-3 gap-2">
-                <div className="bg-blue-50 rounded-lg p-3 text-center">
-                  <p className="text-lg font-black text-blue-700">{teachers}</p>
-                  <p className="text-[10px] text-blue-500 font-bold">معلم</p>
-                </div>
-                <div className="bg-purple-50 rounded-lg p-3 text-center">
-                  <p className="text-lg font-black text-purple-700">{adminsN}</p>
-                  <p className="text-[10px] text-purple-500 font-bold">إداري</p>
-                </div>
-                <div className="bg-orange-50 rounded-lg p-3 text-center">
-                  <p className="text-lg font-black text-orange-700">{workers}</p>
-                  <p className="text-[10px] text-orange-500 font-bold">عامل</p>
-                </div>
               </div>
             </section>
           )}

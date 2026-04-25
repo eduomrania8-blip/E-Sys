@@ -5,6 +5,7 @@ import { cookies } from 'next/headers';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import DeleteSchoolButton from './DeleteSchoolButton';
+import { sortStatsByGrade } from '@/utils/gradeSorter';
 
 export default async function SchoolDetailsPage({ params }: { params: { id: string } }) {
   const cookieStore = cookies();
@@ -19,14 +20,14 @@ export default async function SchoolDetailsPage({ params }: { params: { id: stri
     supabase.from('school_buildings').select('*').eq('school_id', params.id).single(),
     supabase.from('school_leaders').select('*').eq('school_id', params.id).order('job_title'),
     supabase.from('school_staff').select('*').eq('school_id', params.id).order('job_category'),
-    supabase.from('class_statistics').select('*').eq('school_id', params.id).eq('academic_year', '2025-2026').order('grade_level'),
+    supabase.from('class_statistics').select('*').eq('school_id', params.id).eq('academic_year', '2025-2026'),
   ]);
 
   const school   = schoolRes.data;
   const building = buildingRes.data;
   const leaders  = leadersRes.data ?? [];
   const staff    = staffRes.data ?? [];
-  const stats    = statsRes.data ?? [];
+  const stats    = sortStatsByGrade(statsRes.data ?? []);
 
   if (!school) notFound();
 
@@ -96,7 +97,7 @@ export default async function SchoolDetailsPage({ params }: { params: { id: stri
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <Link href={`/dashboard/upload?school=${params.id}`} className="btn-secondary text-xs px-4 py-2 border-indigo-200 text-indigo-700 hover:bg-indigo-50">
+            <Link href={`/dashboard/upload?code=${school.school_code}`} className="btn-secondary text-xs px-4 py-2 border-indigo-200 text-indigo-700 hover:bg-indigo-50">
               ⬆️ استيراد البيانات
             </Link>
             <Link href={`/dashboard/schools/${params.id}/manual`} className="btn-secondary text-xs px-4 py-2 border-emerald-200 text-emerald-700 hover:bg-emerald-50">
@@ -150,6 +151,12 @@ export default async function SchoolDetailsPage({ params }: { params: { id: stri
                       <th className="px-5 py-3 text-pink-600/70">بنات</th>
                       <th className="px-5 py-3 text-gray-900">الإجمالي</th>
                       <th className="px-5 py-3 text-center">الكثافة</th>
+                      <th className="px-5 py-3 text-gray-500">مسلم</th>
+                      <th className="px-5 py-3 text-gray-500">مسيحي</th>
+                      <th className="px-5 py-3 text-teal-600/70">دمج</th>
+                      <th className="px-5 py-3 text-cyan-600/70">وافد</th>
+                      <th className="px-5 py-3 text-orange-600/70">معيد</th>
+                      <th className="px-5 py-3 text-red-600/70">منقطع</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
@@ -170,6 +177,12 @@ export default async function SchoolDetailsPage({ params }: { params: { id: stri
                               d > 40 ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'
                             }`}>{d}</span>
                           </td>
+                          <td className="px-5 py-3 text-gray-600">{s.muslim_count || 0}</td>
+                          <td className="px-5 py-3 text-gray-600">{s.christian_count || 0}</td>
+                          <td className="px-5 py-3 text-teal-600 font-bold">{s.inclusion_total || 0}</td>
+                          <td className="px-5 py-3 text-cyan-600">{s.expatriate_count || 0}</td>
+                          <td className="px-5 py-3 text-orange-600">{s.retained_for_repeat || 0}</td>
+                          <td className="px-5 py-3 text-red-600">{s.dropout_count || 0}</td>
                         </tr>
                       );
                     })}
@@ -182,6 +195,12 @@ export default async function SchoolDetailsPage({ params }: { params: { id: stri
                       <td className="px-5 py-4 text-pink-600">{stats.reduce((a: number, s: any) => a + (s.girls_count || 0), 0)}</td>
                       <td className="px-5 py-4 text-lg">{totalStudents.toLocaleString('ar-EG')}</td>
                       <td className="px-5 py-4 text-center text-emerald-600 text-lg">{avgDensity}</td>
+                      <td className="px-5 py-4 text-gray-600">{stats.reduce((a: number, s: any) => a + (s.muslim_count || 0), 0)}</td>
+                      <td className="px-5 py-4 text-gray-600">{stats.reduce((a: number, s: any) => a + (s.christian_count || 0), 0)}</td>
+                      <td className="px-5 py-4 text-teal-600">{stats.reduce((a: number, s: any) => a + (s.inclusion_total || 0), 0)}</td>
+                      <td className="px-5 py-4 text-cyan-600">{stats.reduce((a: number, s: any) => a + (s.expatriate_count || 0), 0)}</td>
+                      <td className="px-5 py-4 text-orange-600">{stats.reduce((a: number, s: any) => a + (s.retained_for_repeat || 0), 0)}</td>
+                      <td className="px-5 py-4 text-red-600">{stats.reduce((a: number, s: any) => a + (s.dropout_count || 0), 0)}</td>
                     </tr>
                   </tfoot>
                 </table>

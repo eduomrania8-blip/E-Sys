@@ -2,7 +2,7 @@
 // src/app/dashboard/upload/page.tsx
 // نظام رفع مرن: كل ورقة (Sheet) تُرفع منفردة أو مجمّعة حسب الاختيار
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 
 // تعريف أنواع الأوراق المدعومة
@@ -117,6 +117,12 @@ export default function UploadPage() {
   const [isDownloading, setIsDownloading] = useState(false);
   const [results, setResults]       = useState<UploadResult[]>([]);
   const [step, setStep]             = useState<'select' | 'result'>('select');
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code');
+    if (code) setSchoolCode(code);
+  }, []);
 
   const handleDownloadTemplate = async () => {
     try {

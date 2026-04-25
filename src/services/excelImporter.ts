@@ -3,6 +3,7 @@
 // يدعم المرحلة الابتدائية حالياً + معمارية قابلة للتوسع للمراحل الأخرى
 
 import * as XLSX from 'xlsx';
+import { sanitizeSubject, sanitizeQualification } from '@/utils/dataSanitizer';
 
 // ─── أنواع البيانات ────────────────────────────────────────────────
 
@@ -371,6 +372,10 @@ function parseLeadersSheet(rows: string[][]): { data: Record<string, unknown>[];
   const phoneCol = colOf(['تليفون', 'هاتف', 'موبايل', 'رقم الهاتف']);
   const cadreCol = colOf(['الكادر', 'كادر']);
   const typeCol  = colOf(['نوع التعيين', 'تعيين', 'نوع']);
+  const qualCol  = colOf(['المؤهل', 'مؤهل', 'المؤهل الدراسي']);
+  const qualDateCol = colOf(['تاريخ المؤهل', 'سنة المؤهل']);
+  const roleCol  = colOf(['العمل المكلف به', 'تكليف', 'العمل']);
+  const subCol   = colOf(['مادة', 'التخصص', 'المادة']);
 
   for (let i = headerIdx + 1; i < rows.length; i++) {
     const row = rows[i];
@@ -386,6 +391,10 @@ function parseLeadersSheet(rows: string[][]): { data: Record<string, unknown>[];
       phone:            phoneCol >= 0 ? row[phoneCol] : null,
       cadre:            cadreCol >= 0 ? row[cadreCol] : null,
       appointment_type: typeCol >= 0 ? normalizeAppointment(row[typeCol]) : null,
+      qualification:    qualCol >= 0 ? sanitizeQualification(row[qualCol]) : null,
+      qualification_date: qualDateCol >= 0 ? row[qualDateCol] : null,
+      school_role:      roleCol >= 0 ? row[roleCol] : null,
+      subject_taught:   subCol >= 0 ? sanitizeSubject(row[subCol]) : null,
     });
   }
   return { data, warnings: [] };
@@ -453,8 +462,18 @@ function parseStaffSheet(rows: string[][]): { data: Record<string, unknown>[]; w
   const idCol     = colOf(['رقم قومي', 'الرقم القومي', 'قومى']);
   const catCol    = colOf(['الفئة', 'فئة', 'التصنيف', 'نوع الوظيفة']);
   const qualCol   = colOf(['المؤهل', 'مؤهل', 'المؤهل الدراسي']);
+  const qualDateCol = colOf(['تاريخ المؤهل', 'سنة المؤهل']);
+  const hireDateCol = colOf(['تاريخ التعيين', 'تاريخ العمل']);
   const statusCol = colOf(['حالة الخدمة', 'الحالة', 'حالة', 'الوضع']);
   const phoneCol  = colOf(['تليفون', 'هاتف', 'موبايل', 'رقم الهاتف']);
+  
+  // حقول جديدة حسب الهيكلة
+  const subCol    = colOf(['مادة', 'التخصص', 'المادة']);
+  const roleCol   = colOf(['العمل المكلف به', 'تكليف', 'العمل']);
+  const workerCol = colOf(['نوع العامل', 'تخصيص العامل', 'طبيعة العامل']);
+  const typeCol   = colOf(['نوع التعيين', 'التعيين']);
+  const cadreCol  = colOf(['الكادر', 'الوظيفة على الكادر']);
+  const assignCol = colOf(['الوضع', 'أصلي', 'منتدب']);
 
   for (let i = headerIdx + 1; i < rows.length; i++) {
     const row = rows[i];
@@ -463,11 +482,22 @@ function parseStaffSheet(rows: string[][]): { data: Record<string, unknown>[]; w
     const nid  = idCol >= 0 ? row[idCol] : '';
     if (!name || String(name).trim().length < 3) continue;
     const validNid = String(nid).length >= 14 ? String(nid) : ('00000000000000' + Math.floor(Math.random() * 100000)).slice(-14);
+    
+    const cat = catCol >= 0 ? normalizeCategory(row[catCol]) : 'عامل';
+    
     data.push({
       full_name_ar:  String(name).trim(),
       national_id:   validNid,
-      job_category:  catCol >= 0 ? normalizeCategory(row[catCol]) : 'عامل',
-      qualification: qualCol >= 0 ? row[qualCol] : null,
+      job_category:  cat,
+      qualification: qualCol >= 0 ? sanitizeQualification(row[qualCol]) : null,
+      qualification_date: qualDateCol >= 0 ? row[qualDateCol] : null,
+      hire_date: hireDateCol >= 0 ? row[hireDateCol] : null,
+      school_role: roleCol >= 0 ? row[roleCol] : null,
+      subject_taught: cat === 'معلم' && subCol >= 0 ? sanitizeSubject(row[subCol]) : null,
+      worker_type: cat === 'عامل' && workerCol >= 0 ? row[workerCol] : null,
+      cadre_position: cadreCol >= 0 ? row[cadreCol] : null,
+      employment_type: typeCol >= 0 ? row[typeCol] : 'تعيين',
+      assignment_status: assignCol >= 0 ? (row[assignCol].includes('منتدب') ? 'منتدب' : 'أصل') : 'أصل',
       work_status:   statusCol >= 0 ? normalizeWorkStatus(row[statusCol]) : 'على رأس العمل',
       phone:         phoneCol >= 0 ? row[phoneCol] : null,
     });

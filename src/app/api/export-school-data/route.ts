@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import * as XLSX from 'xlsx';
+import { sortStatsByGrade } from '@/utils/gradeSorter';
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -16,7 +17,7 @@ export async function GET(req: NextRequest) {
     const [schoolRes, buildingRes, statsRes, leadersRes, staffRes, lowRes, incRes, expRes, refRes] = await Promise.all([
       supabaseAdmin.from('schools').select('*, educational_administrations(name_ar, governorate)').eq('id', schoolId).single(),
       supabaseAdmin.from('school_buildings').select('*').eq('school_id', schoolId).single(),
-      supabaseAdmin.from('class_statistics').select('*').eq('school_id', schoolId).eq('academic_year', '2025-2026').order('grade_level'),
+      supabaseAdmin.from('class_statistics').select('*').eq('school_id', schoolId).eq('academic_year', '2025-2026'),
       supabaseAdmin.from('school_leaders').select('*').eq('school_id', schoolId).order('job_title'),
       supabaseAdmin.from('school_staff').select('*').eq('school_id', schoolId).order('job_category'),
       supabaseAdmin.from('low_performer_students').select('*').eq('school_id', schoolId).eq('academic_year', '2025-2026'),
@@ -37,7 +38,8 @@ export async function GET(req: NextRequest) {
     const wb = XLSX.utils.book_new();
 
     // ─── Sheet 1: إحصاءات الصفوف ──────────────────────────
-    const statsData = (statsRes.data ?? []).map(s => ([
+    const sortedStats = sortStatsByGrade(statsRes.data ?? []);
+    const statsData = sortedStats.map(s => ([
       s.grade_level,
       s.number_of_classes,
       s.boys_count,
