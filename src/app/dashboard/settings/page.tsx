@@ -4,6 +4,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
+import { SkeletonPage } from '@/components/shared/SkeletonLoader';
 
 export default function SettingsPage() {
   const supabase = createBrowserClient(
@@ -129,7 +130,7 @@ export default function SettingsPage() {
     }
   }
 
-  if (loading) return <div className="text-center py-16"><div className="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto" /></div>;
+  if (loading) return <SkeletonPage />;
 
   return (
     <div className="space-y-10 animate-in max-w-4xl" dir="rtl">

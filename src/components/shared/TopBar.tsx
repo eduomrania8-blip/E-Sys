@@ -12,8 +12,13 @@ export const TopBar: React.FC = () => {
   const router = useRouter();
 
   const handleSignOut = async () => {
-    await supabaseBrowser.auth.signOut();
-    router.push('/login');
+    try {
+      await fetch('/api/auth/signout', { method: 'POST' });
+    } catch (e) {
+      console.error('Logout error', e);
+    }
+    // Force a hard reload to clear any client-side state and hit the middleware fresh
+    window.location.href = '/login';
   };
 
   return (

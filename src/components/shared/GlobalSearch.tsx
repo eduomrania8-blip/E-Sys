@@ -76,8 +76,8 @@ export default function GlobalSearch() {
         onClick={() => { setIsOpen(true); setTimeout(() => inputRef.current?.focus(), 100); }}
         className="flex items-center gap-2 bg-white border border-gray-200 text-gray-500 px-4 py-2 rounded-xl text-sm hover:border-blue-400 hover:ring-2 hover:ring-blue-100 transition-all w-full justify-between shadow-sm"
       >
-        <span className="flex items-center gap-2 font-bold opacity-70"><span>🔍</span> بحث سريع عن أي شيء...</span>
-        <span className="text-[10px] font-mono bg-gray-100 px-1.5 py-0.5 rounded border text-gray-400">Ctrl K</span>
+        <span className="flex items-center gap-2 font-bold opacity-70 truncate"><span>🔍</span> <span className="hidden sm:inline">بحث سريع عن أي شيء...</span><span className="sm:hidden">بحث...</span></span>
+        <span className="hidden sm:block text-[10px] font-mono bg-gray-100 px-1.5 py-0.5 rounded border text-gray-400">Ctrl K</span>
       </button>
 
       {/* Omnibar Dialog */}

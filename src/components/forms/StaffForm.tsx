@@ -190,9 +190,9 @@ export default function StaffForm({ schoolId }: { schoolId: string }) {
 
       {/* Smart Form */}
       {showForm && (
-        <form onSubmit={handleAdd} className="bg-white border border-slate-200 shadow-xl rounded-2xl animate-slide-down overflow-hidden">
+        <form onSubmit={handleAdd} className="bg-white/90 backdrop-blur-xl border border-white/50 shadow-2xl rounded-2xl animate-slide-down overflow-hidden">
           {/* Header */}
-          <div className="bg-slate-50 border-b border-slate-100 p-5">
+          <div className="bg-slate-50/50 backdrop-blur-md border-b border-slate-100/50 p-5">
             <h2 className="text-lg font-black text-slate-800">إضافة سجل وظيفي جديد</h2>
             <p className="text-xs text-slate-500 mt-1">يرجى إدخال البيانات بدقة لضمان صحة التقارير والإحصاءات.</p>
           </div>

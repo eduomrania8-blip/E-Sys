@@ -255,9 +255,9 @@ export default function LeadersForm({ schoolId }: { schoolId: string }) {
 
       {/* Form */}
       {showForm && (
-        <form onSubmit={handleSubmit} className="bg-white border border-slate-200 shadow-xl rounded-2xl animate-slide-down overflow-hidden">
+        <form onSubmit={handleSubmit} className="bg-white/90 backdrop-blur-xl border border-white/50 shadow-2xl rounded-2xl animate-slide-down overflow-hidden">
           {/* Header */}
-          <div className="bg-slate-50 border-b border-slate-100 p-5">
+          <div className="bg-slate-50/50 backdrop-blur-md border-b border-slate-100/50 p-5">
             <h3 className="font-black text-slate-800 text-lg flex items-center gap-2">
               {editId ? '✏️ تعديل بيانات القائد' : '✨ إضافة قائد جديد'}
             </h3>

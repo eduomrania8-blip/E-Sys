@@ -69,7 +69,11 @@ export function SchoolSidebar({ schoolId, schoolName, schoolCode, canEdit }: Pro
     exact ? pathname === href : pathname.startsWith(href);
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    try {
+      await fetch('/api/auth/signout', { method: 'POST' });
+    } catch (e) {
+      console.error('Logout error', e);
+    }
     window.location.href = '/login';
   };
 

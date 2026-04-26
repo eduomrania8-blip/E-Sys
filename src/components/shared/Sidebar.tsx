@@ -69,7 +69,11 @@ export function Sidebar() {
     exact ? pathname === href : pathname.startsWith(href);
 
   const handleSignOut = async () => {
-    await supabaseBrowser.auth.signOut();
+    try {
+      await fetch('/api/auth/signout', { method: 'POST' });
+    } catch (e) {
+      console.error('Logout error', e);
+    }
     window.location.href = '/login';
   };
 

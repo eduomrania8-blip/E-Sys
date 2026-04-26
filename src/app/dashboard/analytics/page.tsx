@@ -187,8 +187,8 @@ export default function AnalyticsPage() {
                     <Cell key={idx} fill={entry.fill} className="drop-shadow-sm" />
                   ))}
                 </Pie>
-                <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                <Legend wrapperStyle={{ fontSize: '11px', fontWeight: 'bold' }} />
+                <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', direction: 'rtl' }} />
+                <Legend wrapperStyle={{ fontSize: '11px', fontWeight: 'bold', direction: 'rtl' }} />
               </PieChart>
             </ResponsiveContainer>
           ) : <EmptyChart />}
@@ -220,8 +220,8 @@ export default function AnalyticsPage() {
                     <Cell key={idx} fill={entry.fill} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(v: number) => v.toLocaleString('ar-EG')} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                <Legend wrapperStyle={{ fontSize: '11px', fontWeight: 'bold' }} />
+                <Tooltip formatter={(v: number) => v.toLocaleString('ar-EG')} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', direction: 'rtl' }} />
+                <Legend wrapperStyle={{ fontSize: '11px', fontWeight: 'bold', direction: 'rtl' }} />
               </PieChart>
             </ResponsiveContainer>
           ) : <EmptyChart />}
@@ -461,8 +461,8 @@ export default function AnalyticsPage() {
                   <CartesianGrid strokeDasharray="3 3" opacity={0.3} vertical={false} />
                   <XAxis dataKey="name" tick={{ fontSize: 11, fontWeight: 'bold', fill: '#4b5563' }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
-                  <Tooltip cursor={{fill: '#f3f4f6'}} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                  <Legend wrapperStyle={{ fontSize: '12px', fontWeight: 'bold', paddingTop: '20px' }} />
+                  <Tooltip cursor={{fill: '#f3f4f6'}} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', direction: 'rtl' }} />
+                  <Legend wrapperStyle={{ fontSize: '12px', fontWeight: 'bold', paddingTop: '20px', direction: 'rtl' }} />
                   <Bar dataKey="بنين" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={30} />
                   <Bar dataKey="بنات" fill="#ec4899" radius={[4, 4, 0, 0]} barSize={30} />
                 </BarChart>

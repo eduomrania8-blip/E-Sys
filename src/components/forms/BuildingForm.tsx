@@ -107,9 +107,20 @@ export default function BuildingForm({ schoolId }: { schoolId: string }) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { id, created_at, updated_at, ...cleanData } = formData;
+    const { id, created_at, updated_at, number_of_floors, has_library, has_smart_lab, ...cleanData } = formData;
     const payload = { school_id: schoolId, ...cleanData };
-    const { error } = await supabase.from('school_buildings').upsert(payload, { onConflict: 'school_id' });
+    
+    // Use select then update/insert to avoid onConflict constraint issues
+    const { data: existing } = await supabase.from('school_buildings').select('id').eq('school_id', schoolId).single();
+    
+    let error;
+    if (existing?.id) {
+      const res = await supabase.from('school_buildings').update(payload).eq('id', existing.id);
+      error = res.error;
+    } else {
+      const res = await supabase.from('school_buildings').insert([payload]);
+      error = res.error;
+    }
 
     if (error) {
       showToast(`❌ خطأ في الحفظ: ${error.message}`, 'error');
