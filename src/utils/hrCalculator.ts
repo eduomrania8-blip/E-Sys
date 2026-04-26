@@ -1,6 +1,7 @@
-// src/utils/hrCalculator.ts
 // محرك حساب العجز والزيادة (HR Quota & Shortage Calculator)
 // مبني على النموذج الرسمي لإدارة أجا التعليمية - العام الدراسي 2025/2026
+
+import { sanitizeCadre } from './dataSanitizer';
 
 /**
  * الأنصبة القانونية (أسبوعياً) لكل معلم حسب الكادر والمرحلة التعليمية.
@@ -176,7 +177,7 @@ export function calculateSubjectShortage(
   );
 
   activeTeachers.forEach(teacher => {
-    const cadre = (teacher.cadre_position || '').trim();
+    const cadre = sanitizeCadre(teacher.cadre_position);
     const cadreQuotas = CADRE_QUOTAS[stage] as Record<string, number>;
     
     // بحث مباشر (تطابق تام)

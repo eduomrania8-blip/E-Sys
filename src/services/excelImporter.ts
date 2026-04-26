@@ -3,7 +3,15 @@
 // يدعم المرحلة الابتدائية حالياً + معمارية قابلة للتوسع للمراحل الأخرى
 
 import * as XLSX from 'xlsx';
-import { sanitizeSubject, sanitizeQualification } from '@/utils/dataSanitizer';
+import { 
+  sanitizeSubject, 
+  sanitizeQualification, 
+  sanitizeCadre, 
+  sanitizeJobTitle, 
+  sanitizeAppointment,
+  sanitizeDisability 
+} from '@/utils/dataSanitizer';
+import { normalizeArabic } from '@/utils/textNormalization';
 
 // ─── أنواع البيانات ────────────────────────────────────────────────
 
@@ -66,16 +74,11 @@ export const ALL_GRADES = GRADE_CONFIGS;
 export function normalizeGradeLevel(val: string | null | undefined): string | null {
   if (!val || val.trim().length < 2) return null;
 
-  const s = val
-    .trim()
-    .replace(/أ/g, 'ا').replace(/إ/g, 'ا').replace(/آ/g, 'ا')
-    .replace(/ة/g, 'ه').replace(/ى/g, 'ي').replace(/ئ/g, 'ي')
-    .replace(/\s+/g, ' ')
-    .toLowerCase();
+  const s = normalizeArabic(val).toLowerCase();
 
   // 1. تطابق مباشر مع المفتاح
   for (const g of GRADE_CONFIGS) {
-    if (s === g.key.toLowerCase() || s === g.key.replace(/أ/g,'ا').replace(/إ/g,'ا').toLowerCase()) {
+    if (s === normalizeArabic(g.key).toLowerCase()) {
       return g.key;
     }
   }
@@ -83,7 +86,7 @@ export function normalizeGradeLevel(val: string | null | undefined): string | nu
   // 2. تطابق مع الـ aliases
   for (const g of GRADE_CONFIGS) {
     for (const alias of g.aliases) {
-      const normAlias = alias.replace(/أ/g,'ا').replace(/إ/g,'ا').replace(/آ/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').toLowerCase();
+      const normAlias = normalizeArabic(alias).toLowerCase();
       if (s.includes(normAlias) || normAlias.includes(s)) return g.key;
     }
   }
@@ -336,7 +339,7 @@ function parseStudentList(
       base.notes = notesCol >= 0 ? row[notesCol] : null;
     } else if (type === 'inclusion') {
       base.national_id     = idCol >= 0 ? row[idCol] : null;
-      base.disability_type = disCol >= 0 ? normalizeDisability(row[disCol]) : null;
+      base.disability_type = sanitizeDisability(row[disCol]);
     } else if (type === 'expatriate') {
       base.passport_number = passCol >= 0 ? row[passCol] : null;
       base.country         = countryCol >= 0 ? row[countryCol] : null;
@@ -387,10 +390,10 @@ function parseLeadersSheet(rows: string[][]): { data: Record<string, unknown>[];
     data.push({
       full_name_ar:     String(name).trim(),
       national_id:      validNid,
-      job_title:        titleCol >= 0 ? normalizeTitle(row[titleCol]) : 'مدير',
+      job_title:        sanitizeJobTitle(row[titleCol]),
       phone:            phoneCol >= 0 ? row[phoneCol] : null,
-      cadre:            cadreCol >= 0 ? row[cadreCol] : null,
-      appointment_type: typeCol >= 0 ? normalizeAppointment(row[typeCol]) : null,
+      cadre:            cadreCol >= 0 ? sanitizeCadre(row[cadreCol]) : null,
+      appointment_type: sanitizeAppointment(row[typeCol]),
       qualification:    qualCol >= 0 ? sanitizeQualification(row[qualCol]) : null,
       qualification_date: qualDateCol >= 0 ? row[qualDateCol] : null,
       school_role:      roleCol >= 0 ? row[roleCol] : null,
@@ -495,8 +498,8 @@ function parseStaffSheet(rows: string[][]): { data: Record<string, unknown>[]; w
       school_role: roleCol >= 0 ? row[roleCol] : null,
       subject_taught: cat === 'معلم' && subCol >= 0 ? sanitizeSubject(row[subCol]) : null,
       worker_type: cat === 'عامل' && workerCol >= 0 ? row[workerCol] : null,
-      cadre_position: cadreCol >= 0 ? row[cadreCol] : null,
-      employment_type: typeCol >= 0 ? row[typeCol] : 'تعيين',
+      cadre_position: cadreCol >= 0 ? sanitizeCadre(row[cadreCol]) : null,
+      employment_type: sanitizeAppointment(row[typeCol]),
       assignment_status: assignCol >= 0 ? (row[assignCol].includes('منتدب') ? 'منتدب' : 'أصل') : 'أصل',
       work_status:   statusCol >= 0 ? normalizeWorkStatus(row[statusCol]) : 'على رأس العمل',
       phone:         phoneCol >= 0 ? row[phoneCol] : null,

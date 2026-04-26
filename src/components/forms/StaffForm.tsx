@@ -2,7 +2,13 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
-import { sanitizeSubject, sanitizeQualification, STANDARD_SUBJECTS } from '@/utils/dataSanitizer';
+import { 
+  sanitizeSubject, 
+  sanitizeQualification, 
+  sanitizeCadre, 
+  sanitizeAppointment,
+  STANDARD_SUBJECTS 
+} from '@/utils/dataSanitizer';
 
 const JOB_CATEGORIES = [
   { value: 'معلم', icon: '👨‍🏫', color: 'blue', label: 'معلم' },
@@ -110,17 +116,17 @@ export default function StaffForm({ schoolId }: { schoolId: string }) {
 
     const payload = { 
       school_id: schoolId,
-      full_name_ar: form.full_name_ar,
+      full_name_ar: form.full_name_ar.trim(),
       national_id: validNid,
       phone: form.phone,
       job_category: form.job_category,
       qualification: sanitizeQualification(form.qualification),
       qualification_date: form.qualification_date || null,
       hire_date: form.hire_date || null,
-      school_role: form.school_role,
+      school_role: form.school_role.trim(),
       subject_taught: form.job_category === 'معلم' ? sanitizeSubject(form.subject_taught) : null,
-      cadre_position: form.job_category === 'معلم' && isPublicSchool ? form.cadre_position : null,
-      employment_type: form.employment_type,
+      cadre_position: form.job_category === 'معلم' && isPublicSchool ? sanitizeCadre(form.cadre_position) : null,
+      employment_type: sanitizeAppointment(form.employment_type),
       assignment_status: form.job_category === 'معلم' ? form.assignment_status : null,
       worker_type: form.job_category === 'عامل' ? form.worker_type : null,
       work_status: form.work_status

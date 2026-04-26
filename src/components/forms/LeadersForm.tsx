@@ -2,7 +2,13 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
-import { sanitizeSubject, sanitizeQualification } from '@/utils/dataSanitizer';
+import { 
+  sanitizeSubject, 
+  sanitizeQualification, 
+  sanitizeCadre, 
+  sanitizeJobTitle, 
+  sanitizeAppointment 
+} from '@/utils/dataSanitizer';
 
 const JOB_TITLES = [
   { value: 'مدير', icon: '👑', color: 'amber' },
@@ -81,8 +87,12 @@ export default function LeadersForm({ schoolId }: { schoolId: string }) {
 
     const payload = { 
       school_id: schoolId, 
-      ...form, 
-      national_id: validNid
+      full_name_ar: form.full_name_ar.trim(),
+      national_id: validNid,
+      job_title: sanitizeJobTitle(form.job_title),
+      phone: form.phone,
+      cadre: sanitizeCadre(form.cadre),
+      appointment_type: sanitizeAppointment(form.appointment_type),
     };
 
     let error;
